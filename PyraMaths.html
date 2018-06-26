@@ -1,0 +1,699 @@
+<html>
+	<head>
+		<title>Pyramaths</title>
+		<style>
+			body { margin: 0; }
+            canvas
+{   position: absolute;
+    display: block;
+    margin: 0 auto;
+}
+			
+		</style>
+	</head>
+	<body onload="init();">
+		<script src="js/three.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/createjs-2015.05.21.min.js"></script>
+        <script src="js/tween.min.js"></script>
+        <script src="js/Controle.js"></script>
+        <script src="js/STLloader.js"></script>
+        
+		<script>
+            
+            var stage_enigme,stage_controleur,renderer;
+            var current; //objet en cours de selection
+            var freeze=false // Tween de la rotation            
+            var rotation=0; //variable controlant la rotation de la camera 0,90,-90,180
+            var pos_l,pos_c //la position de la caméra dans le tableau laby
+            var eng,controleur //les canvas pour l'énigme et les menus
+            var Main_control //le container de base du controler (nécessaire pour redimensionner)
+            
+            
+            var Laby=[
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,0,0,3,0,0,1,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,2,1,0,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,1,1,1,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,4,1,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                ]
+            
+            
+          
+            
+        function init() {
+	       
+	       images = images||{};
+
+	       var manifest = [
+		     
+		      {src:"images/gold_2.jpg", id:"gold"},
+              {src:"images/sand.jpg", id:"sand"},
+              {src:"images/compagnon.png", id:"compagnon"},
+             
+               
+	       ];
+
+	       var loader = new createjs.LoadQueue(false);
+            loader.addEventListener("fileload", handleFileLoad);
+	       loader.addEventListener("complete", handleComplete);
+	       loader.loadManifest(manifest);
+            }
+
+            
+            function handleFileLoad(evt) {
+	        if (evt.item.type == "image") { images[evt.item.id] = evt.result; }
+            }
+
+                        
+            // Création de la scène 3D
+            var scene = new THREE.Scene();
+            scene.fog = new THREE.Fog("#000000", 0.0025, 5);
+            var L=window.innerWidth*2/3
+            var Main_Scale=L/755
+            
+            var camera = new THREE.PerspectiveCamera( 40, 755 / 400, 0.1, 1000 );
+            renderer = new THREE.WebGLRenderer();
+            
+            renderer.setSize( L, 400*Main_Scale );
+            document.body.appendChild( renderer.domElement );           
+            
+            
+            
+            camera.position.z = 0.5;
+            camera.position.y = 0.5;
+           // camera.position.y = 6.5;
+            camera.position.x = 0;
+            //var helper = new THREE.CameraHelper( camera );
+            //scene.add( helper );
+            camera.lookAt(new THREE.Vector3( 0, 0.5, -1 ))
+           // camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
+            
+            // placement du personnage
+            for(let i=0;i<Laby.length;i++){
+                 for(let j=0;j<Laby.length;j++){
+                     if(Laby[i][j]==2){                    
+                     camera.position.x=-10+1*j;
+                     camera.position.z=-10+1*i+0.5;  
+                     pos_l=i;
+                     pos_c=j;
+                     break;
+                        }
+                        }
+                    }
+            
+            var light = new THREE.AmbientLight( 0x000020 ); 
+            scene.add( light );
+            
+           var spotLight = new THREE.PointLight(  0xFFFFFF,  1.5,  40,  20 ,0.5,0.5,2);
+           spotLight.position.set( camera.position.x,  camera.position.y,  camera.position.z );
+           scene.add( spotLight );
+            
+          
+           
+             
+                 
+            
+            var pyramide=new THREE.Object3D()             
+            
+           var axesHelper = new THREE.AxesHelper( 15 );
+            scene.add( axesHelper );
+            
+            scene.add(pyramide);
+            
+            var material_sol,material_mur;
+            /////////////////////////////////////////////////////////// creation des stages //////////////////////////////////
+            function handleComplete() {               
+           
+            eng = document.getElementById("eng");   
+            controleur=document.getElementById("controleur");
+            eng.width=renderer.domElement.width;
+            eng.height=renderer.domElement.height;
+            eng.style.left=window.innerWidth/6+"px";
+            eng.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            controleur.width=renderer.domElement.width;
+            controleur.height=renderer.domElement.height;
+            controleur.style.left=window.innerWidth/6+"px";
+            controleur.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            renderer.domElement.style.left=window.innerWidth/6+"px";
+            renderer.domElement.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            
+            
+	        stage_enigme = new createjs.Stage(eng);	  
+            stage_controleur = new createjs.Stage(controleur);
+            createjs.Ticker.timingMode = createjs.Ticker.RAF; // pour une animation Tween plus fluide  
+            createjs.Ticker.addEventListener("tick", stage_enigme); // pour que la scene1 soit redessinée à chaque "tick"
+            createjs.Ticker.addEventListener("tick", stage_controleur); // pour que la scene2 soit redessinée à chaque "tick"
+            createjs.Ticker.addEventListener("tick", createjs.Tween); // pour que Tween fonctionne après un Ticker.reset() au déchargement de l'exercice;
+            createjs.Touch.enable(stage_enigme); 
+            stage_enigme.enableMouseOver(); 
+            createjs.Touch.enable(stage_controleur); 
+            stage_controleur.enableMouseOver(); 
+            
+            Main_control=new createjs.Container();
+            stage_controleur.addChild(Main_control)
+            Main_control.scaleX=Main_control.scaleY=Main_Scale;
+                
+                
+            /*var orbit = new THREE.OrbitControls( camera, renderer.domElement );
+			orbit.enableZoom = true;
+            var light = new THREE.AmbientLight( 0x000000 ); 
+            scene.add( light );
+            document.getElementById("eng").style.display="none"*/
+                
+            /////////////////////// test du compagnon /////////////////////////
+            console.log(images.compagnon);
+            let phara=new createjs.Bitmap(images["compagnon"]);
+            phara.scaleX=phara.scaleY=0.5
+            phara.x=650
+            phara.y=300
+            Main_control.addChild(phara);
+            
+            
+                
+            //////////////////////// Création des stèles ///////////////////////////
+            var steleMap = new THREE.TextureLoader().load( "images/stele.png", function ( texture ) {
+                
+                var steleMaterial = new THREE.SpriteMaterial( { map: texture, color: 0xffffff } );
+                steleMaterial.fog=true;
+                for(let i=0;i<Laby.length;i++){
+                 for(let j=0;j<Laby.length;j++){
+                     if(Laby[i][j]==4){
+                     let c=Stele(1,3,1,steleMaterial);
+                     c.position.x=-10+1*j;
+                     c.position.z=-10+1*i+0.5;
+                     c.position.y=0.35;
+                     c.scale.x=c.scale.y=c.scale.z=0.7
+                        pyramide.add( c ); 
+                        }
+                        }
+                    }
+                
+                }
+                                                          
+            );
+           
+            
+           
+            
+            ///////////////////////// Création des momies //////////////////////////////////////////////
+            var spriteMap = new THREE.TextureLoader().load( "images/momie.png", function ( texture ) {
+                
+                var spriteMaterial = new THREE.SpriteMaterial( { map: texture, color: 0xffffff } );
+                spriteMaterial.fog=true;
+                for(let i=0;i<Laby.length;i++){
+                 for(let j=0;j<Laby.length;j++){
+                     if(Laby[i][j]==3){
+                     let c=Momie(1,3,1,spriteMaterial);
+                     c.position.x=-10+1*j;
+                     c.position.z=-10+1*i+0.5;
+                     c.position.y=0.35;
+                     c.scale.x=c.scale.y=c.scale.z=0.7
+                        pyramide.add( c ); 
+                        }
+                        }
+                    }
+                
+                }
+                                                          
+            );
+            
+           
+                
+                         
+            ///////////////////////// Création du sol/////////////////////////////////////////////////////////////////////////////
+            var loader_sol = new THREE.TextureLoader();
+            // load a resource
+            loader_sol.load(
+                // resource URL
+                'images/sand.jpg',
+
+                // onLoad callback
+                function ( texture ) {
+                    // in this example we create the material when the texture is loaded
+                    
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set( 20, 20 );                    
+                    material_sol = new THREE.MeshPhongMaterial( {
+                        map: texture,color:0xFFFFFF
+                     } );
+                    
+                    let ground=Sol(20,0.01,20,material_sol);
+                    pyramide.add( ground ); 
+                }
+                
+            );
+                
+            /////////////////////////////////////////////////////////
+                
+             
+                
+              ///////////////////////// Création des murs/////////////////////////////////////////////////////////////////////////////
+          
+               var loader_mur = new THREE.TextureLoader();
+                // load a resource
+                loader_mur.load(
+                    // resource URL
+                    'images/gold.jpg',
+
+                    // onLoad callback
+                    function ( texture ) {
+                        // in this example we create the material when the texture is loaded
+                
+                        material_m1 = new THREE.MeshPhongMaterial( { map: texture, color:0xFFFFFF,specular: 0x000000, shininess: 10 } );
+                
+                
+                for(let i=0;i<Laby.length;i++){
+                 for(let j=0;j<Laby.length;j++){
+                     if(Laby[i][j]==1){
+                     let c=Cube(1,3,1,material_m1);
+                     c.position.x=-10+1*j;
+                     c.position.z=-10+1*i+0.5;
+                     c.position.y=0.5;
+                        pyramide.add( c ); 
+                        }
+                        }
+                    }
+              })
+                
+              ///////////////////////// Création des bordures/////////////////////////////////////////////////////////////////////////////
+          
+               var loader_bord = new THREE.TextureLoader();
+                // load a resource
+                loader_bord.load(
+                    // resource URL
+                    'images/gold.jpg',
+
+                    // onLoad callback
+                    function ( texture ) {
+                        // in this example we create the material when the texture is loaded
+                         //texture.wrapS = THREE.RepeatWrapping;
+                        // texture.wrapT = THREE.RepeatWrapping;
+                         //texture.repeat.set( 5, 1 );   
+                        material_bord = new THREE.MeshLambertMaterial( { color:0xFF6600, specular: 0x000000, shininess: 10 } );
+                        
+                        
+                        
+                       
+                
+                for(let i=0;i<Laby.length;i++){
+                 for(let j=0;j<Laby.length;j++){
+                     if(Laby[i][j]==1){
+                     let  c=Bord(0.5,0.2,0.05,0.05,material_bord)                    
+                     c.position.x=-10+1*j;
+                     c.position.z=-10+1*i;
+                     c.position.y=0;
+                        pyramide.add( c ); 
+                        }
+                        }
+                    }
+              })
+                
+                document.onkeydown=keyPressed;
+           
+                            
+//            var bgtexture= THREE.ImageUtils.loadTexture( "images/background.jpg");            
+//            var geometry = new THREE.PlaneGeometry( 90, 90, 32 );
+//            var material = new THREE.MeshBasicMaterial( {map:bgtexture, side: THREE.DoubleSide} );
+//            var plane = new THREE.Mesh( geometry, material );
+//            plane.position.z=-30;
+//            camera.add( plane );
+//            scene.add(camera);
+            
+            }
+            
+            var tw //la tween de déplacement
+            function keyPressed(event) {  
+		        //console.log(event.keyCode)
+                if(freeze==false){
+                    freeze=true;
+                    switch(event.keyCode) {
+                        case 37:{
+                            let f=camera.rotation.y+3.1415/2;
+                            rotation+=90
+                            if(rotation>180){rotation=-90}
+                            tw=new TWEEN.Tween( { y:camera.rotation.y   } )
+                                    .to( { y:f }, 250 )
+                                    .onUpdate( function () {                               
+                                    camera.rotation.y = this.y;
+                                    } )
+                                    .onComplete( ()=>{freeze=false}
+                                        )
+                                .start();
+
+                        break;}
+                            
+                        case 39:{
+                            rotation-=90
+                            if(rotation<-90){rotation=180}
+                            let f=camera.rotation.y-3.1415/2;
+                            tw=new TWEEN.Tween( { y:camera.rotation.y   } )
+                                    .to( { y:f }, 250 )
+                                    .onUpdate( function () {                               
+                                    camera.rotation.y = this.y;
+                                    } )
+                                    .onComplete( ()=>{freeze=false}
+                                        )
+                                .start();
+
+                        break;}
+                            
+                        case 38:{                            
+                            if(collision(rotation)){
+                                Laby[pos_l][pos_c]=0;
+                                let f1=camera.position.z
+                                let f2=camera.position.x                            
+
+                                if(rotation==0){                            
+                                 f1=camera.position.z-1;
+                                 pos_l--;
+                                }
+                                if(rotation==180){                            
+                                 f1=camera.position.z+1;
+                                 pos_l++;
+                                }
+                                if(rotation==90){                            
+                                 f2=camera.position.x-1; 
+                                 pos_c--;
+                                }
+                                if(rotation==-90){                            
+                                 f2=camera.position.x+1;  
+                                 pos_c++;
+                                }
+                                Laby[pos_l][pos_c]=2;
+                                //debug_laby();
+                                tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
+                                        .to( { z:f1,x:f2 }, 250 )
+                                        .onUpdate( function () {                               
+                                        camera.position.z = this.z;
+                                        spotLight.position.z=this.z;
+                                        camera.position.x = this.x;
+                                        spotLight.position.x=this.x;
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                            } else {freeze=false}
+                        
+                        break;}
+                        case 40:{
+                            let r;
+                            if(rotation==90 || rotation==-90){r=-rotation}
+                            if(rotation==0){r=180}
+                            if(rotation==180){r=0}
+                            if(collision(r)){
+                                Laby[pos_l][pos_c]=0;
+                                let f1=camera.position.z
+                                let f2=camera.position.x                            
+
+                                if(rotation==0){                            
+                                 f1=camera.position.z+1;
+                                 pos_l++;
+                                }
+                                if(rotation==180){                            
+                                 f1=camera.position.z-1;
+                                 pos_l--;
+                                }
+                                if(rotation==90){                            
+                                 f2=camera.position.x+1; 
+                                 pos_c++;
+                                }
+                                if(rotation==-90){                            
+                                 f2=camera.position.x-1;  
+                                 pos_c--;
+                                }
+                                Laby[pos_l][pos_c]=2;
+                                //debug_laby();
+                                tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
+                                        .to( { z:f1,x:f2 }, 250 )
+                                        .onUpdate( function () {                               
+                                        camera.position.z = this.z;
+                                        spotLight.position.z=this.z;
+                                        camera.position.x = this.x;
+                                        spotLight.position.x=this.x;
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                            } else {freeze=false}
+                        
+                        break;}
+                        default: freeze=false;
+                    }
+                }
+                //debug_laby()
+            }
+            
+            function collision(dir){
+                switch(dir){
+                    case 0: if(Laby[pos_l-1][pos_c]!=0){return false};break;
+                    case -90: if(Laby[pos_l][pos_c+1]!=0){return false};break;
+                    case 90: if(Laby[pos_l][pos_c-1]!=0){return false};break;
+                    case 180: if(Laby[pos_l+1][pos_c]!=0){return false};break;
+                }
+                return(true);
+                
+            }
+            
+            
+                    
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //Gestion du click sur les cubes       
+            
+            //renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+           // renderer.domElement.addEventListener( 'touchstart', onDocumentTouchStart, false );
+            
+            var  raycaster = new THREE.Raycaster();
+			var  mouse = new THREE.Vector2();
+            
+            function onDocumentTouchStart( event ) {				
+				event.preventDefault();
+				event.clientX = event.touches[0].clientX;
+				event.clientY = event.touches[0].clientY;
+				onDocumentMouseDown( event );
+
+			}	
+
+			function onDocumentMouseDown( event ) {
+                
+				event.preventDefault();               
+				mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
+				mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;              
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( objects );
+				if ( intersects.length > 0 ) {                     
+                    current=intersects[0].object;   
+                    createjs.Tween.get(pharaon).to({y:600},500,createjs.Ease.circOut);
+                    if(current.clicable==true){
+                    var dep=new THREE.Vector3( 0, dimension, dimension+1 )
+                    dep.add(intersects[0].point);
+                    dep.divideScalar(2);
+                    var t=new TWEEN.Tween( { x:camera.position.x,y:camera.position.y,z:camera.position.z   } )
+                    .to( { x:0,y:dimension,z:dimension+1 }, 250 )
+                    .to( { x:dep.x,y:dep.y,z:dep.z }, 250 )
+                    .onUpdate( function () {
+                           camera.position.x = this.x ;
+                           camera.position.y = this.y;
+                           camera.position.z = this.z;
+                           camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
+                           
+                            } )
+                            .start();
+                  
+                    var d=document.getElementById("Enter")
+                    d.style.display="block"  
+                    var t=document.getElementById("nombre")
+                    t.value=current.nombre;
+                    var b=document.getElementById("valider")
+                    b.addEventListener("click",Change)
+                    t.focus();
+                    }
+
+				}
+				
+			}
+            
+            function Change(e){
+               
+                document.getElementById("valider").removeEventListener("click",Change);
+                current.nombre=document.getElementById("nombre").value;
+                current.update_Nombre(current.nombre,current)
+                var d=document.getElementById("Enter")
+                d.style.display="none" 
+               var t=new TWEEN.Tween( { x:camera.position.x,y:camera.position.y,z:camera.position.z   } )
+                    .to( { x:0,y:dimension,z:dimension+1 }, 250 )
+                    .onUpdate( function () {
+                           camera.position.x = this.x ;
+                           camera.position.y = this.y;
+                           camera.position.z = this.z;
+                           camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
+                           
+                            } )
+                            .start();
+                
+            }
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // Déclaration de l'objet "Cube"            
+           function Cube(l,L,h,material_mur){        
+               
+                var geometry = new THREE.BoxGeometry( l,L,h );               
+                this.cube = new THREE.Mesh( geometry, material_mur );           
+                              
+              
+                this.cube.Shake=function(c){
+                    var origine=c.position.clone();
+                    function moove(){
+                    c.position.x=origine.x+Math.random()*0.1
+                    c.position.y=origine.y+Math.random()*0.1
+                    c.position.z=origine.z+Math.random()*0.1
+                   
+                    }
+                    var r=window.setInterval(moove,50);
+                    setTimeout(function(){window.clearInterval(r);c.position.x=origine.x;c.position.y=origine.y;c.position.z=origine.z},2000);
+                    
+                }
+                
+                return(this.cube);
+                            
+                
+            }
+            
+             // Déclaration de l'objet "Momie"            
+           function Momie(l,L,h,material){  
+                
+                var sprite = new THREE.Sprite( material );          
+                return(sprite);                           
+                
+            }
+            
+               // Déclaration de l'objet "Stele"            
+           function Stele(l,L,h,material){  
+                
+                var sprite = new THREE.Sprite( material );          
+                return(sprite);                           
+                
+            }
+            
+            
+            
+            
+              // Déclaration de l'objet "Bord"            
+           function Bord(l,L,h,e,material){        
+               var shape = new THREE.Shape();
+                shape.moveTo( -l,h );
+                shape.lineTo( l, h );
+                shape.lineTo( l+e, 0 );
+                shape.lineTo( -l-e, 0 );
+                shape.lineTo( -l, h );
+
+                var extrudeSettings = {
+                    steps: 2,
+                    amount: 1,                   
+                    bevelEnabled: true,
+	                bevelThickness: e,
+                    bevelSize: e
+                   
+                };
+                var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );                              
+                this.cube = new THREE.Mesh( geometry, material ); 
+               
+             
+              
+                
+                return(this.cube);
+                            
+                
+            }
+            
+            
+            
+             // Déclaration de l'objet "Sol"            
+           function Sol(l,L,h,material_sol){                  
+              
+                
+                var geometry = new THREE.BoxGeometry( l,L,h );                
+                this.cube = new THREE.Mesh( geometry, material_sol );                  
+                              
+               
+                
+                // fonction mettant à jour la texture du cube
+//                this.cube.update_texture=function(c){                    
+//                    texture_sol.wrapS = THREE.RepeatWrapping;
+//                    texture_sol.wrapT = THREE.RepeatWrapping;
+//                    texture_sol.repeat.set( 10, 10 );                   
+//                    c.material.map=texture_sol;
+//                    c.material.map.needsUpdate = true;
+//                }
+              
+                
+              // this.cube.update_texture(this.cube);                
+          
+                
+                return(this.cube);
+                            
+                
+            }
+            
+            
+            
+            
+            
+            
+
+          
+            
+           ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+           // fonction de rendu  
+           function render() {
+	       requestAnimationFrame( render );   
+           //renderer.render(backgroundScene , backgroundCamera );
+	       renderer.render( scene, camera );
+           TWEEN.update();              
+               
+            }
+            render();
+            
+            /////////////////////////////// fonction de debu Laby
+            function debug_laby(){ 
+                for(let i=0;i<Laby.length;i++){
+                     let l=""
+                     for(let j=0;j<Laby.length;j++){
+                         l=l+Laby[i][j];
+                     }
+                     console.log(l)
+                 }
+            }
+                        
+           
+            
+		</script>
+        
+   
+    <canvas id="controleur" width="200" height="400" style="position: absolute; z-index: 2000;"></canvas>
+    <canvas id="eng" width="200" height="400" style="position: absolute; z-index: 2;"></canvas>
+    
+        
+    
+        
+        
+    
+	</body>
+    
+</html>
