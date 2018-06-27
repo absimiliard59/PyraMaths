@@ -4,10 +4,15 @@
 		<style>
 			body { margin: 0; }
             canvas
-{   position: absolute;
-    display: block;
-    margin: 0 auto;
-}
+        {   position: absolute;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        @font-face{
+      font-family:'MyFont';
+	  src:url('ralewayb.ttf')	  
+        }
 			
 		</style>
 	</head>
@@ -18,16 +23,19 @@
         <script src="js/tween.min.js"></script>
         <script src="js/Controle.js"></script>
         <script src="js/STLloader.js"></script>
+        <script src="js/dialogue.js"></script>
         
 		<script>
             
             var stage_enigme,stage_controleur,renderer;
             var current; //objet en cours de selection
-            var freeze=false // Tween de la rotation            
+            var freeze=false // permet de bloquer le clavier;           
             var rotation=0; //variable controlant la rotation de la camera 0,90,-90,180
             var pos_l,pos_c //la position de la caméra dans le tableau laby
             var eng,controleur //les canvas pour l'énigme et les menus
             var Main_control //le container de base du controler (nécessaire pour redimensionner)
+            var phara //container du pharaon
+        
             
             
             var Laby=[
@@ -62,8 +70,8 @@
 
 	       var manifest = [
 		     
-		      {src:"images/gold_2.jpg", id:"gold"},
-              {src:"images/sand.jpg", id:"sand"},
+		      //{src:"images/gold_2.jpg", id:"gold"},
+              //{src:"images/sand.jpg", id:"sand"},
               {src:"images/compagnon.png", id:"compagnon"},
              
                
@@ -131,7 +139,7 @@
             
             var pyramide=new THREE.Object3D()             
             
-           var axesHelper = new THREE.AxesHelper( 15 );
+            var axesHelper = new THREE.AxesHelper( 15 );
             scene.add( axesHelper );
             
             scene.add(pyramide);
@@ -176,13 +184,21 @@
             scene.add( light );
             document.getElementById("eng").style.display="none"*/
                 
-            /////////////////////// test du compagnon /////////////////////////
-            console.log(images.compagnon);
-            let phara=new createjs.Bitmap(images["compagnon"]);
+            /////////////////////// Introduction /////////////////////////            
+            phara=new createjs.Bitmap(images["compagnon"]);
             phara.scaleX=phara.scaleY=0.5
-            phara.x=650
-            phara.y=300
+            //phara.x=650 x final
+            phara.x=1000;
+            phara.y=300 // y final          
             Main_control.addChild(phara);
+            createjs.Tween.get(phara).wait(2000).to({x:650},500).call(intro);
+            function intro(){
+                let b=dialogue("Bonjour,\nBienvenue dans le prototype de PyraMath, un jeu dans lequel vous devrez retrouver 6 gemmes afin de sortir de ce labyrinthe. \nJe m'appelle Khaal Culatis et je serai votre guide dans cette aventure.","qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+                b.x=640;
+                b.y=330;            
+                b.addEventListener("suite",()=>{b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);})
+                Main_control.addChild(b)
+            }
             
             
                 
