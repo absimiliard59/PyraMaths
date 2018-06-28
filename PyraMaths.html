@@ -1,20 +1,13 @@
 <html>
 	<head>
-		<title>Pyramaths</title>
-		<style>
-			body { margin: 0; }
-            canvas
-        {   position: absolute;
-            display: block;
-            margin: 0 auto;
-        }
+        <title>Pyramaths</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="css/style.css" />
+
+		<style>	        
+        		
+        </style>
         
-        @font-face{
-      font-family:'MyFont';
-	  src:url('ralewayb.ttf')	  
-        }
-			
-		</style>
 	</head>
 	<body onload="init();">
 		<script src="js/three.js"></script>
@@ -24,17 +17,29 @@
         <script src="js/Controle.js"></script>
         <script src="js/STLloader.js"></script>
         <script src="js/dialogue.js"></script>
+        <script src="js/puzzle_1.js"></script>
+        <script src="js/utils.js"></script>
+
         
 		<script>
             
             var stage_enigme,stage_controleur,renderer;
+            var camera //la camera de la scene 3D
+            var tremble=0 //permet de gérer le tremblement de la caméra
             var current; //objet en cours de selection
             var freeze=false // permet de bloquer le clavier;           
             var rotation=0; //variable controlant la rotation de la camera 0,90,-90,180
             var pos_l,pos_c //la position de la caméra dans le tableau laby
             var eng,controleur //les canvas pour l'énigme et les menus
             var Main_control //le container de base du controler (nécessaire pour redimensionner)
+            var Main_enigme //le container de base de l'énigme (nécessaire pour redimensionner)
             var phara //container du pharaon
+            var big_enigme=[puzzle_1()]; //liste des enigmes sur canvas
+            var small_enigme=[]
+            var liste_stel=[]; //liste des steles
+            var liste_mom=[]; //listes des momies
+
+            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme (pour l'instant simplissime) !\rQuelle est la moitié du doubre de 5 ?","5"])
         
             
             
@@ -95,7 +100,7 @@
             var L=window.innerWidth*2/3
             var Main_Scale=L/755
             
-            var camera = new THREE.PerspectiveCamera( 40, 755 / 400, 0.1, 1000 );
+            camera = new THREE.PerspectiveCamera( 40, 755 / 400, 0.1, 1000 );
             renderer = new THREE.WebGLRenderer();
             
             renderer.setSize( L, 400*Main_Scale );
@@ -110,7 +115,7 @@
             //var helper = new THREE.CameraHelper( camera );
             //scene.add( helper );
             camera.lookAt(new THREE.Vector3( 0, 0.5, -1 ))
-           // camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
+           // camera.lookAt(new THREE.Vector3( 0, 0, 0 ))            
             
             // placement du personnage
             for(let i=0;i<Laby.length;i++){
@@ -148,12 +153,13 @@
             /////////////////////////////////////////////////////////// creation des stages //////////////////////////////////
             function handleComplete() {               
            
+            let cont=document.getElementById("enigme")
             eng = document.getElementById("eng");   
             controleur=document.getElementById("controleur");
             eng.width=renderer.domElement.width;
             eng.height=renderer.domElement.height;
-            eng.style.left=window.innerWidth/6+"px";
-            eng.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            enigme.style.left=window.innerWidth/6+"px";
+            enigme.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
             controleur.width=renderer.domElement.width;
             controleur.height=renderer.domElement.height;
             controleur.style.left=window.innerWidth/6+"px";
@@ -171,11 +177,20 @@
             createjs.Touch.enable(stage_enigme); 
             stage_enigme.enableMouseOver(); 
             createjs.Touch.enable(stage_controleur); 
-            stage_controleur.enableMouseOver(); 
+            stage_controleur.enableMouseOver();                    
             
             Main_control=new createjs.Container();
-            stage_controleur.addChild(Main_control)
+            stage_controleur.addChild(Main_control);
+            let htmlElement=document.getElementById('reponse')
+            let ch=new createjs.DOMElement(htmlElement); 
+            ch.x=550;
+            ch.y=300;
+            Main_control.addChild(ch);
             Main_control.scaleX=Main_control.scaleY=Main_Scale;
+
+            Main_enigme=new createjs.Container();
+            stage_enigme.addChild(Main_enigme)
+            Main_enigme.scaleX=Main_enigme.scaleY=Main_Scale;
                 
                 
             /*var orbit = new THREE.OrbitControls( camera, renderer.domElement );
@@ -191,9 +206,9 @@
             phara.x=1000;
             phara.y=300 // y final          
             Main_control.addChild(phara);
-            createjs.Tween.get(phara).wait(2000).to({x:650},500).call(intro);
+            //createjs.Tween.get(phara).wait(1000).to({x:650},500).call(intro);
             function intro(){
-                let b=dialogue("Bonjour,\nBienvenue dans le prototype de PyraMath, un jeu dans lequel vous devrez retrouver 6 gemmes afin de sortir de ce labyrinthe. \nJe m'appelle Khaal Culatis et je serai votre guide dans cette aventure.","qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+                let b=dialogue("Bonjour,\nBienvenue dans le prototype de PyraMath, un jeu dans lequel vous devrez retrouver 6 gemmes afin de sortir de ce labyrinthe. \nJe m'appelle Khaal Culatris et je serai votre guide dans cette aventure.","momie",["J'ai compris."],["#fc00ed"],["suite"]);
                 b.x=640;
                 b.y=330;            
                 b.addEventListener("suite",()=>{b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);})
@@ -210,11 +225,15 @@
                 for(let i=0;i<Laby.length;i++){
                  for(let j=0;j<Laby.length;j++){
                      if(Laby[i][j]==4){
-                     let c=Stele(1,3,1,steleMaterial);
-                     c.position.x=-10+1*j;
-                     c.position.z=-10+1*i+0.5;
-                     c.position.y=0.35;
-                     c.scale.x=c.scale.y=c.scale.z=0.7
+                        let c=Stele(1,3,1,steleMaterial);
+                        c.position.x=-10+1*j;
+                        c.position.z=-10+1*i+0.5;
+                        c.position.y=0.35;
+                        c.scale.x=c.scale.y=c.scale.z=0.7;
+                        c.L=i;
+                        c.C=j;
+                        c.enigme=big_enigme[0];
+                        liste_stel.push(c);
                         pyramide.add( c ); 
                         }
                         }
@@ -235,11 +254,15 @@
                 for(let i=0;i<Laby.length;i++){
                  for(let j=0;j<Laby.length;j++){
                      if(Laby[i][j]==3){
-                     let c=Momie(1,3,1,spriteMaterial);
-                     c.position.x=-10+1*j;
-                     c.position.z=-10+1*i+0.5;
-                     c.position.y=0.35;
-                     c.scale.x=c.scale.y=c.scale.z=0.7
+                        let c=Momie(1,3,1,spriteMaterial);
+                        c.position.x=-10+1*j;
+                        c.position.z=-10+1*i+0.5;
+                        c.position.y=0.35;
+                        c.scale.x=c.scale.y=c.scale.z=0.7
+                        c.L=i;
+                        c.C=j;
+                        c.enigme=small_enigme[0];
+                        liste_mom.push(c)
                         pyramide.add( c ); 
                         }
                         }
@@ -350,10 +373,26 @@
 //            var plane = new THREE.Mesh( geometry, material );
 //            plane.position.z=-30;
 //            camera.add( plane );
-//            scene.add(camera);
-            
+//            scene.add(camera);            
             }
-            
+
+            function get_stele(L,C){                         
+                for(let i=0;i<liste_stel.length;i++){
+                    if(liste_stel[i].L==L && liste_stel[i].C==C){
+                        return(liste_stel[i])
+                    }
+                }
+            }
+
+            function get_momie(L,C){                         
+                for(let i=0;i<liste_mom.length;i++){
+                    if(liste_mom[i].L==L && liste_mom[i].C==C){
+                        return(liste_mom[i])
+                    }
+                }
+            }
+
+                       
             var tw //la tween de déplacement
             function keyPressed(event) {  
 		        //console.log(event.keyCode)
@@ -425,7 +464,39 @@
                                         .onComplete( ()=>{freeze=false}
                                             )
                                     .start();
-                            } else {freeze=false}
+                            } else {
+                                let enface_l=pos_l
+                                let enface_c=pos_c
+                                if(rotation==0){                            
+                                 enface_l--;                                 
+                                }
+                                if(rotation==180){                            
+                                 enface_l++;
+                                }
+                                if(rotation==90){                            
+                                 enface_c--;
+                                }
+                                if(rotation==-90){                            
+                                 enface_c++;
+                                }
+                                if(Laby[enface_l][enface_c]==4){
+                                    let e=get_stele(enface_l,enface_c).enigme;                                   
+                                    Main_enigme.addChild(e);
+                                    eng.style.zIndex=2500;                                    
+                                }
+                                if(Laby[enface_l][enface_c]==3){
+                                    let e=get_momie(enface_l,enface_c).enigme;                                   
+                                    let b=dialogue(e[0],"momie",[e[1]],["#fc00ed"],["suite"]);
+                                    b.x=20;
+                                    b.y=20;            
+                                    b.addEventListener("faux",()=>{tremble=0.3;});
+                                    b.addEventListener("vrai",()=>{                                        
+                                        get_momie(enface_l,enface_c).clear(b,enface_l,enface_c);
+                                    });
+                                    Main_enigme.addChild(b)                                    
+                                }
+                                //freeze=false
+                            }
                         
                         break;}
                         case 40:{
@@ -594,15 +665,30 @@
              // Déclaration de l'objet "Momie"            
            function Momie(l,L,h,material){  
                 
-                var sprite = new THREE.Sprite( material );          
+                var sprite = new THREE.Sprite( material );
+                sprite.clear=function(b,l,d){
+                    b.clear();
+                    Laby[l][d]=0;
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:-1}, 2500 )
+                                        .onUpdate( function () {                               
+                                        sprite.position.y = this.y;
+                                        sprite.position.x=a+0.05*Math.cos(Math.random()*6.28);
+                                        sprite.position.z=c+0.05*Math.cos(Math.random()*6.28)                                       
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                }          
                 return(sprite);                           
                 
             }
             
                // Déclaration de l'objet "Stele"            
            function Stele(l,L,h,material){  
-                
-                var sprite = new THREE.Sprite( material );          
+                var sprite = new THREE.Sprite( material );                  
                 return(sprite);                           
                 
             }
@@ -678,10 +764,15 @@
            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
            // fonction de rendu  
            function render() {
-	       requestAnimationFrame( render );   
-           //renderer.render(backgroundScene , backgroundCamera );
-	       renderer.render( scene, camera );
-           TWEEN.update();              
+                requestAnimationFrame( render );   
+                //renderer.render(backgroundScene , backgroundCamera );
+                renderer.render( scene, camera );
+                TWEEN.update();
+                if(tremble>0){                   
+                    camera.position.x=-10+1*pos_c+tremble*Math.cos(6.28*Math.random());
+                    camera.position.z=-10+1*pos_l+0.5+tremble*Math.cos(6.28*Math.random());
+                    tremble=tremble-0.01
+                    }     
                
             }
             render();
@@ -692,7 +783,7 @@
                      let l=""
                      for(let j=0;j<Laby.length;j++){
                          l=l+Laby[i][j];
-                     }
+                     } 
                      console.log(l)
                  }
             }
@@ -703,7 +794,13 @@
         
    
     <canvas id="controleur" width="200" height="400" style="position: absolute; z-index: 2000;"></canvas>
-    <canvas id="eng" width="200" height="400" style="position: absolute; z-index: 2;"></canvas>
+    <div id="enigme" style="position: absolute;">
+        <canvas id="eng" width="200" height="400" style="position: absolute; z-index: 2;"></canvas>
+        <form id="reponse" class="popup">
+        Réponse:<input class="champ" id="contenu" type="text" name="fname" maxlength="12">
+        <input id="envoyer" class="bouton" type="button" value="OK">
+    </form> 
+    </div>
     
         
     
