@@ -1,6 +1,8 @@
 puzzle_1 = function(){
 
 let exo=new createjs.Container()
+exo.bloque=true;
+exo.indice=0;
     
 var util = utilitaire();//raccourci
     
@@ -17,6 +19,7 @@ let freeze; //variable indiquant si les boutons sont actifs ou non
 let consigne;
 let objectif; // deux champs de texte
 let n1,n2,n3,n4; //les liste de nombres remplissant les carrés
+let valider,quitter //les boutons
 
 
     
@@ -57,11 +60,22 @@ n4=String(options.nbr_carre4).split(";");
 
 };
 
+exo.debloque=function(){
+    createjs.Tween.get(p2).to({y:100},500);
+    exo.bloque=false;
+    valider.visible=true;
+
+}
+
 
 
 //Création de la page question, exécutée à chaque question,
 // tous les éléments de la page doivent être ajoutés à exo.blocAnimation
 creerPageQuestion = function() {  
+
+    let fond=new createjs.Bitmap(images["pierre"]);
+    exo.addChild(fond)
+    
     
     creerDonnees();
     
@@ -98,6 +112,7 @@ creerPageQuestion = function() {
     c1.y=p1.y=100;
     c2.x=p2.x=350;
     c2.y=p2.y=100;
+    p2.y=-500;
     c3.x=p3.x=150;
     c3.y=p3.y=300;
     c4.x=p4.x=350;
@@ -115,11 +130,13 @@ creerPageQuestion = function() {
     scene=new createjs.Container()
     exo.addChild(scene)
     scene.x=-50
-    scene.addChild(rot,c1,c2,c3,c4,p1,p2,p3,p4);    
+    
+    scene.addChild(rot,c1,c2,c3,c4,p1,p2,p3,p4);  
+      
     plateau();
     
     rot.scaleX=rot.scaleY=0.7;
-    rot.addEventListener("click",function(){if(freeze==false){
+    rot.addEventListener("click",function(){if(exo.bloque==false && freeze==false){
                                             freeze=true;
                                             piece_rotation(tab_cache);
                                             createjs.Tween.get(rot).to({rotation:360},500).call(function(){rot.rotation=0});
@@ -138,10 +155,10 @@ creerPageQuestion = function() {
                                                 }
                                             },500)   }
                                            });
-    c1.addEventListener("click",function(){if(freeze==false){carre_rotation(c1,tab_cache)}});
-    c2.addEventListener("click",function(){if(freeze==false){carre_rotation(c2,tab_cache)}})
-    c3.addEventListener("click",function(){if(freeze==false){carre_rotation(c3,tab_cache)}})
-    c4.addEventListener("click",function(){if(freeze==false){carre_rotation(c4,tab_cache)}})
+    c1.addEventListener("click",function(){if(exo.bloque==false && freeze==false ){carre_rotation(c1,tab_cache)}});
+    c2.addEventListener("click",function(){if(exo.bloque==false && freeze==false ){carre_rotation(c2,tab_cache)}})
+    c3.addEventListener("click",function(){if(exo.bloque==false && freeze==false ){carre_rotation(c3,tab_cache)}})
+    c4.addEventListener("click",function(){if(exo.bloque==false && freeze==false ){carre_rotation(c4,tab_cache)}})
     
     creer_enonce();
     
@@ -162,25 +179,36 @@ creerPageQuestion = function() {
     consigne.textBaseline = "alphabetic";
     consigne.x=400;
     consigne.y=70;
-    exo.addChild(consigne)
+    //exo.addChild(consigne)
     
-    objectif=new createjs.Text(util.numToStr(eval_plateau(tab_nombre,tab_solution)),"bold 55px Calibri","#339900")
+    objectif=new createjs.Text(util.numToStr(eval_plateau(tab_nombre,tab_solution)),"bold 100px Calibri","#FF0000")
     objectif.textBaseline = "alphabetic";
     objectif.textAlign="center";
     objectif.x=550;
-    objectif.y=270;
+    objectif.y=210;
     exo.addChild(objectif);
+
+    valider=bouton("Valider",exo,"valider")
+    valider.x=630
+    valider.y=340
+
+    quitter=bouton("Quitter",exo,"quitter")
+    quitter.x=430
+    quitter.y=340
     
- 
-    
-	 
+    valider.visible=false;
+    exo.addChild(valider,quitter)
+
+    exo.valider=valider;
+    exo.quitter=quitter;    
+  
 }
 
 
 
 // Evaluation : doit toujours retourner "juste" "faux" ou "rien"
-evaluer = function() {	
-       
+exo.evaluer = function() {	
+       //return("juste")
         if(eval_plateau(tab_nombre,tab_solution)==eval_plateau(tab_nombre,tab_cache)){
           return("juste");}
         return("faux");
@@ -227,6 +255,23 @@ corriger = function() {
 
     
 ////////////////////////////////////// Bibliothèque annexe ///////////////////////////////////
+function bouton(te,clip,event){
+    let b=new createjs.Container();
+    let f=new createjs.Shape();
+    let t=new createjs.Text(te, "20px Bangers", "#000000");  
+    t.textBaseline = "top";          
+    let l=t.getBounds().width;
+    let h=t.getBounds().height;            
+    f.graphics.setStrokeStyle(2).beginStroke("#000000").beginFill("#FFFFFF").drawRoundRect(0,0,l*1.5,h*1.5,3);
+    t.x=l*0.25;
+    t.y=h*0.25;
+    b.addChild(f,t);    
+    b.mouseChildren=false;
+    b.cursor="pointer";
+    b.addEventListener("click",()=>{if(b.alpha==1){clip.dispatchEvent(event)}})
+    return(b);
+}
+
 function carre_fond(){
     const res=new createjs.Container();
     const fond=new createjs.Shape();
@@ -238,7 +283,7 @@ function carre_fond(){
 function piece_1(){
     const res=new createjs.Container();
     const fond=new createjs.Shape();
-    fond.graphics.f("#CC0099").s().p("AkqMgIAAxKIn1AAIAAmmQAAhPBPAAIWhAAQBPAAAABPIAAGmIn1AAIAARKg");
+    fond.graphics.f("#FFCC00").s().p("AksMzIAAxKQkfgCjQBhQhHkqBHkpQMchOMdBOQBDE2hDEiQjLhhkpgDIAARKg");
     res.addChild(fond);
     res.pos=1;
     return(res)
@@ -247,9 +292,19 @@ function piece_1(){
 
 function piece_2(){
     const res=new createjs.Container();
-    const fond=new createjs.Shape();
-    fond.graphics.f("#CC0099").s().p("AkqMgIAAxKIn1AAIAAmmQAAhPBPAAIP7AAIAARKIH1AAIAAGmQAABPhPAAg");
-    res.addChild(fond);
+    const fond1=new createjs.Shape();
+    fond1.graphics.f("#FF0000").s().p("ACYgnQhfBLjQAKQCFh0CqAfg");
+    fond1.setTransform(-51.4,-68.3);
+
+    const fond2=new createjs.Shape();
+    fond2.graphics.f("#FF9900").s().p("AEfM3QAEkgDGjUIBkAAIAyH0gAn9M3QgEiIABiBIADAAQDTi4E7gzIC0AAQkoDMg3EogAnkDJIgKgBQAMiHAUh6QE8hJD4jdQgFDageDVQjkB7j8AAQgjAAgkgCgAmnkTIjXAAQDcjuAJk1QCIAGClASQhRExjjDaIgCAAIgBABg");
+    fond2.setTransform(21,-2.3);
+    
+    const fond3=new createjs.Shape();
+    fond3.graphics.f("#FFCC00").s().p("ACCM5QA3kpEpjLIElAAQjGDTgFEhgAjiIwQACi7AQirIAKABQEgATEGiMQgRB5gZB4IgIACQk6AyjTC5gAiFkQIAAgBIADAAQDhjaBRkyQBfAKBoAOQASDVgFDSQj7Dek5BJQAShxAZhogAqckRQjMlHC8iQQB/hgGyATQgKE1jcDvgApPpiQDTgKBehOQgjgGghAAQiDAAhqBeg");
+    fond3.setTransform(-7.4,-2.5);
+	
+    res.addChild(fond3,fond2,fond1);
     res.pos=2;
     return(res)
     
@@ -258,7 +313,7 @@ function piece_2(){
 function piece_3(){
     const res=new createjs.Container();
     const fond=new createjs.Shape();
-    fond.graphics.f("#CC0099").s().p("ArQMgQhPAAAAhPIAA2hQAAhPBPAAIWhAAQBPAAAABPIAAP7In1AAIAApVIpVAAIAAJVIJVAAIAAH1g");
+    fond.graphics.f("#FFCC00").s().p("ArQMgQhPAAAAhPIAA2hQAAhPBPAAIWhAAQBPAAAABPIAAP7In1AAIAApVIpVAAIAAJVIJVAAIAAH1g");
     res.addChild(fond);
     res.pos=3;
     return(res)
@@ -268,7 +323,7 @@ function piece_3(){
 function piece_4(){
     const res=new createjs.Container();
     const fond=new createjs.Shape();
-    fond.graphics.f("#CC0099").s().p("ArQMgQhPAAAAhPIAAmmIRKAAIAApVIxKAAIAAmmQAAhPBPAAIWhAAQBPAAAABPIAAWhQAABPhPAAg");
+    fond.graphics.f("#FFCC00").s().p("ArQMgQhPAAAAhPIAAmmIRKAAIAApVIxKAAIAAmmQAAhPBPAAIWhAAQBPAAAABPIAAWhQAABPhPAAg");
     res.addChild(fond);
     res.pos=4;
     return(res)
@@ -648,7 +703,7 @@ function creer_enonce(){
     p1.x=150;
     p1.y=100;
     p2.x=350;
-    p2.y=100;
+    p2.y=-500;
     p3.x=150;
     p3.y=300;
     p4.x=350;

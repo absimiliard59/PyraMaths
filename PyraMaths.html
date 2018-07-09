@@ -2,6 +2,7 @@
 	<head>
         <title>Pyramaths</title>
         <meta charset="UTF-8">
+        <link href="https://fonts.googleapis.com/css?family=Bangers" rel="stylesheet"> 
         <link rel="stylesheet" href="css/style.css" />
 
 		<style>	        
@@ -19,27 +20,38 @@
         <script src="js/dialogue.js"></script>
         <script src="js/puzzle_1.js"></script>
         <script src="js/utils.js"></script>
+        <script src="js/inventaire.js"></script>
+        <script src="js/Chargeur.js"></script>
 
         
 		<script>
-            
-            var stage_enigme,stage_controleur,renderer;
+            var temps=3600
+            var montre;
+            var images,textures,Ch;
+            var scene,spotLight,pyramide;
+            var stage_enigme,stage_controleur,stage_inventaire,renderer;          
             var camera //la camera de la scene 3D
             var tremble=0 //permet de gérer le tremblement de la caméra
             var current; //objet en cours de selection
             var freeze=false // permet de bloquer le clavier;           
             var rotation=0; //variable controlant la rotation de la camera 0,90,-90,180
             var pos_l,pos_c //la position de la caméra dans le tableau laby
-            var eng,controleur //les canvas pour l'énigme et les menus
+            var eng,controleur,inv //les canvas pour l'énigme, le dialogue et l'inventaire
             var Main_control //le container de base du controler (nécessaire pour redimensionner)
             var Main_enigme //le container de base de l'énigme (nécessaire pour redimensionner)
+            var Main_inventaire //idem pour l'inventaire
             var phara //container du pharaon
-            var big_enigme=[puzzle_1()]; //liste des enigmes sur canvas
+            var objets // l'inventaire
+            var big_enigme; //liste des enigmes sur canvas
             var small_enigme=[]
-            var liste_stel=[]; //liste des steles
-            var liste_mom=[]; //listes des momies
+            var liste_stel=[]; //liste des steles;
+            var liste_mom=[]; //listes des momies;
+            var liste_objets=[]; //listes des objets;                     
+            var mode="laby" //ou "enigme" si le joueur est en train de résoudre une énigme.
+            var premier_objet=true;
 
-            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme (pour l'instant simplissime) !\rQuelle est la moitié du doubre de 5 ?","5"])
+
+            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
         
             
             
@@ -57,9 +69,9 @@
                  [0,0,0,0,0,0,0,1,0,1,0,0,3,0,0,1,0,0,0,0],
                  [0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,0],
                  [0,0,0,0,0,0,0,1,0,1,2,1,0,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,1,1,1,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,4,1,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,1,1,0,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,0,1,5,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,4,1,0,1,1,1,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -70,32 +82,65 @@
           
             
         function init() {
+
+             eng = document.getElementById("eng"); 
+             stage_enigme = new createjs.Stage(eng);
+             createjs.Ticker.addEventListener("tick", stage_enigme); // pour que la scene1 soit redessinée à chaque "tick"
+
+             Ch=new Chargement();
+             Ch.x=400
+             Ch.y=150
+             stage_enigme.addChild(Ch)
+
 	       
 	       images = images||{};
+           textures =textures ||{}
 
 	       var manifest = [
 		     
-		      //{src:"images/gold_2.jpg", id:"gold"},
-              //{src:"images/sand.jpg", id:"sand"},
+              {src:"images/mur.jpg", id:"mur"},
+              {src:"images/mur2.jpg", id:"mur2"},
+              {src:"images/mur3.jpg", id:"mur3"},
+              {src:"images/sand.jpg", id:"sand"},
+              {src:"images/momie.png", id:"momie"},
               {src:"images/compagnon.png", id:"compagnon"},
+              {src:"images/cuir.png", id:"cuir"},
+              {src:"images/serpent.png", id:"serpent"},
+              {src:"images/pierre.jpg", id:"pierre"},
+              {src:"images/gemme_bleu.png", id:"gemme_bleu"},
+              {src:"images/stele.png", id:"stele"},
+
              
                
 	       ];
 
 	       var loader = new createjs.LoadQueue(false);
-            loader.addEventListener("fileload", handleFileLoad);
+           loader.addEventListener("fileload", handleFileLoad);
 	       loader.addEventListener("complete", handleComplete);
+           loader.addEventListener("progress", handleProgress);
 	       loader.loadManifest(manifest);
             }
 
-            
-            function handleFileLoad(evt) {
-	        if (evt.item.type == "image") { images[evt.item.id] = evt.result; }
-            }
+            function handleProgress(evt){  
+            Ch.Pourcentage.text="Chargement "+Math.floor(evt.progress*100)+" %"
+        }
 
-                        
+
+
+        function handleFileLoad(evt) {
+            if (evt.item.type == "image") { images[evt.item.id] = evt.result;
+            let t=new THREE.Texture(evt.result );
+            t.needsUpdate=true;
+            textures[evt.item.id] = t }
+            
+
+        }            
+        
+        /////////////////////////////////////////////////////////// creation des stages //////////////////////////////////
+        function handleComplete() {
+            Ch.Clear();
             // Création de la scène 3D
-            var scene = new THREE.Scene();
+            scene = new THREE.Scene();
             scene.fog = new THREE.Fog("#000000", 0.0025, 5);
             var L=window.innerWidth*2/3
             var Main_Scale=L/755
@@ -104,28 +149,25 @@
             renderer = new THREE.WebGLRenderer();
             
             renderer.setSize( L, 400*Main_Scale );
-            document.body.appendChild( renderer.domElement );           
-            
-            
-            
+            document.body.appendChild( renderer.domElement );     
+                
             camera.position.z = 0.5;
-            camera.position.y = 0.5;
-           // camera.position.y = 6.5;
+            camera.position.y = 0.5;           
             camera.position.x = 0;
-            //var helper = new THREE.CameraHelper( camera );
-            //scene.add( helper );
+        
             camera.lookAt(new THREE.Vector3( 0, 0.5, -1 ))
-           // camera.lookAt(new THREE.Vector3( 0, 0, 0 ))            
+                    
             
             // placement du personnage
             for(let i=0;i<Laby.length;i++){
-                 for(let j=0;j<Laby.length;j++){
-                     if(Laby[i][j]==2){                    
-                     camera.position.x=-10+1*j;
-                     camera.position.z=-10+1*i+0.5;  
-                     pos_l=i;
-                     pos_c=j;
-                     break;
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==2){                    
+                    camera.position.x=-10+1*j;
+                    camera.position.z=-10+1*i+0.5;  
+                    pos_l=i;
+                    pos_c=j;
+                    Laby[i][j]=0;
+                    break;
                         }
                         }
                     }
@@ -133,51 +175,53 @@
             var light = new THREE.AmbientLight( 0x000020 ); 
             scene.add( light );
             
-           var spotLight = new THREE.PointLight(  0xFFFFFF,  1.5,  40,  20 ,0.5,0.5,2);
-           spotLight.position.set( camera.position.x,  camera.position.y,  camera.position.z );
-           scene.add( spotLight );
+            spotLight = new THREE.PointLight(  0xFFFFFF,  1.5,  40,  20 ,0.5,0.5,2);
+            spotLight.position.set( camera.position.x,  camera.position.y,  camera.position.z );
+            scene.add( spotLight );
             
-          
-           
-             
-                 
-            
-            var pyramide=new THREE.Object3D()             
-            
-            var axesHelper = new THREE.AxesHelper( 15 );
-            scene.add( axesHelper );
-            
+            pyramide=new THREE.Object3D();            
             scene.add(pyramide);
-            
-            var material_sol,material_mur;
-            /////////////////////////////////////////////////////////// creation des stages //////////////////////////////////
-            function handleComplete() {               
-           
+            render();
+                
+            big_enigme=[puzzle_1()]; //liste des enigmes sur canvas
+        
             let cont=document.getElementById("enigme")
-            eng = document.getElementById("eng");   
+            eng = document.getElementById("eng");  
+            inv = document.getElementById("inv");  
             controleur=document.getElementById("controleur");
             eng.width=renderer.domElement.width;
             eng.height=renderer.domElement.height;
-            enigme.style.left=window.innerWidth/6+"px";
-            enigme.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            
+            
+            cont.style.left=window.innerWidth/6+"px";
+            cont.style.top=(window.innerHeight-400*Main_Scale)/3+"px";
             controleur.width=renderer.domElement.width;
             controleur.height=renderer.domElement.height;
             controleur.style.left=window.innerWidth/6+"px";
-            controleur.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            controleur.style.top=(window.innerHeight-400*Main_Scale)/3+"px";
             renderer.domElement.style.left=window.innerWidth/6+"px";
-            renderer.domElement.style.top=(window.innerHeight-400*Main_Scale)/2.5+"px";
+            renderer.domElement.style.top=(window.innerHeight-400*Main_Scale)/3+"px";
+            
+            inv.width=renderer.domElement.width;
+            inv.style.left=window.innerWidth/6+"px";
+            
+            inv.style.top=(parseInt(controleur.style.top)+parseInt(controleur.height)+10)+"px";
             
             
-	        stage_enigme = new createjs.Stage(eng);	  
+                
             stage_controleur = new createjs.Stage(controleur);
-            createjs.Ticker.timingMode = createjs.Ticker.RAF; // pour une animation Tween plus fluide  
-            createjs.Ticker.addEventListener("tick", stage_enigme); // pour que la scene1 soit redessinée à chaque "tick"
+            stage_inventaire = new createjs.Stage(inv);
+            createjs.Ticker.timingMode = createjs.Ticker.RAF; // pour une animation Tween plus fluide             
             createjs.Ticker.addEventListener("tick", stage_controleur); // pour que la scene2 soit redessinée à chaque "tick"
+            createjs.Ticker.addEventListener("tick", stage_inventaire); // pour que la scene3 soit redessinée à chaque "tick"
             createjs.Ticker.addEventListener("tick", createjs.Tween); // pour que Tween fonctionne après un Ticker.reset() au déchargement de l'exercice;
             createjs.Touch.enable(stage_enigme); 
+            createjs.Touch.enable(stage_inventaire); 
             stage_enigme.enableMouseOver(); 
+            stage_inventaire.enableMouseOver();
+            stage_controleur.enableMouseOver(); 
             createjs.Touch.enable(stage_controleur); 
-            stage_controleur.enableMouseOver();                    
+                            
             
             Main_control=new createjs.Container();
             stage_controleur.addChild(Main_control);
@@ -190,484 +234,306 @@
 
             Main_enigme=new createjs.Container();
             stage_enigme.addChild(Main_enigme)
-            Main_enigme.scaleX=Main_enigme.scaleY=Main_Scale;
+            Main_enigme.scaleX=Main_enigme.scaleY=Main_Scale;            
+
+            Main_inventaire=new createjs.Container();
+            stage_inventaire.addChild(Main_inventaire);
+            Main_inventaire.scaleX=Main_inventaire.scaleY=Main_Scale;
+
+            ////////////////////////// création et gestion de l'inventaire ////////////////////////////
+            objets=inventaire();
+            Main_inventaire.addChild(objets);
+            objets.addEventListener("prendre",prise);
+            objets.addEventListener("deposer",depose);
+            objets.addEventListener("utiliser",utilise);
+
+            function get_objet(L,C){
+                for(let i=0;i<liste_objets.length;i++){
+                    if(liste_objets[i].L==L && liste_objets[i].C==C){
+                        return(liste_objets[i])
+                    }
+                }
+            }
+
+            function utilise(){               
+                let enface_l=enface().l;
+                let enface_c=enface().c  ;                
+                let e=get_stele(enface_l,enface_c).enigme;    
+                let o=objets.selected;                
+            
+                if(e.indice==o.objet.info.indice){                    
+                    objets.deranger();
+                    e.debloque();
+                } else {
+                    console.log("mauvais objet")
+                }
+            }
+
+            function prise(e){  
+                if(mode=="enigme"){mode="laby"}                          
+                let enface_l=enface().l;
+                let enface_c=enface().c ;              
+                let o=get_objet(enface_l,enface_c);                
+                o.prise(enface_l,enface_c);
+                objets.ranger(o);
+            }
+
+            function depose(e){               
+                let enface_l=enface().l;
+                let enface_c=enface().c;
                 
+                if(Laby[enface_l][enface_c]==0){
+                    let o=objets.deranger();
+                    o.replace(enface_l,enface_c);
+                    objets.prendre.alpha=1;
+                }               
+                
+            }
+            ////////////////////////////////////////////////////////////////////////////////////////    
                 
             /*var orbit = new THREE.OrbitControls( camera, renderer.domElement );
-			orbit.enableZoom = true;
+            orbit.enableZoom = true;
             var light = new THREE.AmbientLight( 0x000000 ); 
             scene.add( light );
             document.getElementById("eng").style.display="none"*/
                 
-            /////////////////////// Introduction /////////////////////////            
+            /////////////////////// Dialogues /////////////////////////            
             phara=new createjs.Bitmap(images["compagnon"]);
             phara.scaleX=phara.scaleY=0.5
             //phara.x=650 x final
             phara.x=1000;
             phara.y=300 // y final          
             Main_control.addChild(phara);
-            //createjs.Tween.get(phara).wait(1000).to({x:650},500).call(intro);
-            function intro(){
-                let b=dialogue("Bonjour,\nBienvenue dans le prototype de PyraMath, un jeu dans lequel vous devrez retrouver 6 gemmes afin de sortir de ce labyrinthe. \nJe m'appelle Khaal Culatris et je serai votre guide dans cette aventure.","momie",["J'ai compris."],["#fc00ed"],["suite"]);
-                b.x=640;
-                b.y=330;            
-                b.addEventListener("suite",()=>{b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);})
-                Main_control.addChild(b)
-            }
+            createjs.Tween.get(phara).wait(200).to({x:650},500).call(intro);
             
             
-                
-            //////////////////////// Création des stèles ///////////////////////////
-            var steleMap = new THREE.TextureLoader().load( "images/stele.png", function ( texture ) {
-                
-                var steleMaterial = new THREE.SpriteMaterial( { map: texture, color: 0xffffff } );
-                steleMaterial.fog=true;
-                for(let i=0;i<Laby.length;i++){
-                 for(let j=0;j<Laby.length;j++){
-                     if(Laby[i][j]==4){
-                        let c=Stele(1,3,1,steleMaterial);
-                        c.position.x=-10+1*j;
-                        c.position.z=-10+1*i+0.5;
-                        c.position.y=0.35;
-                        c.scale.x=c.scale.y=c.scale.z=0.7;
-                        c.L=i;
-                        c.C=j;
-                        c.enigme=big_enigme[0];
-                        liste_stel.push(c);
-                        pyramide.add( c ); 
-                        }
+            //////////////////////// Création des objets ///////////////////////////
+            // LE SERPENT           
+            for(let i=0;i<Laby.length;i++){
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==5){
+                    var objMaterial = new THREE.SpriteMaterial( { map: textures["serpent"], color: 0xffffff } );                
+                    objMaterial.fog=true;
+                    let c=Serpent(1,3,1,objMaterial);
+                    c.position.x=-10+1*j;
+                    c.position.z=-10+1*i+0.5;
+                    c.position.y=0.35;
+                    c.scale.x=c.scale.y=c.scale.z=0.2;
+                    c.L=i;
+                    c.C=j;      
+                    pyramide.add(c); 
+                    c.info={indice:0,bitmap:new createjs.Bitmap(images["serpent"]),scale:0.08}; //indice: l'indice dans big_enigme de l'énigme correspondant à cet objet, bitmap pour l'image de l'inventaire, scale pour le dimensionner dans l'inventaire
+                    liste_objets.push(c);
                         }
                     }
+                } 
+            function Serpent(l,L,h,material){  
+                var sprite = new THREE.Sprite( material );    
                 
+                sprite.prise=function(l,d){   
+                    freeze=true; 
+                    Laby[l][d]=0;
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:-1}, 500 )
+                                        .onUpdate( function () {                               
+                                            sprite.position.y = this.y;
+                                            sprite.position.x=a
+                                            sprite.position.z=c                                       
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                }    
+                
+                sprite.replace=function(l,d){ 
+                    freeze=true;   
+                    Laby[l][d]=5;
+                    sprite.position.x=-10+1*d;
+                    sprite.position.z=-10+1*l+0.5;
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    sprite.L=l;
+                    sprite.C=d;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:0.35}, 500 )
+                                        .onUpdate( function () {                               
+                                            sprite.position.y = this.y;
+                                            sprite.position.x=a
+                                            sprite.position.z=c                                       
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                }  
+                return(sprite);                           
+            } 
+            
+            
+            //////////////////////// Création des gemmes ///////////////////////////
+            let gemmes=["gemme_bleu"]        
+            for(let i=0;i<Laby.length;i++){
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==4){
+                    var t=textures[gemmes[0]];                   
+                    var gMaterial = new THREE.SpriteMaterial( { map: t, color: 0xffffff } );                
+                    gMaterial.fog=true;
+                    let c=Gemme(1,3,1,gMaterial);
+                    c.position.x=-10+1*j;
+                    c.position.z=-10+1*i+0.5;
+                    c.position.y=-0.35;
+                    c.scale.x=c.scale.y=c.scale.z=0.2;
+                    c.L=i;
+                    c.C=j;      
+                    pyramide.add(c); 
+                    c.info={indice:0,bitmap:new createjs.Bitmap(images[gemmes[0]]),scale:0.08}; //indice: l'indice dans big_enigme de l'énigme correspondant à cet objet, bitmap pour l'image de l'inventaire, scale pour le dimensionner dans l'inventaire
+                    liste_objets.push(c);
+                    gemmes.splice(0,1);
+                    //Laby[i][j]=5
+                        }
+                    }
+                } 
+            function Gemme(l,L,h,material){  
+                var sprite = new THREE.Sprite( material );    
+                
+                sprite.prise=function(l,d){  
+                    freeze=true; 
+                    Laby[l][d]=0;
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:-1}, 500 )
+                                        .onUpdate( function () {                               
+                                            sprite.position.y = this.y;
+                                            sprite.position.x=a
+                                            sprite.position.z=c                                       
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                }    
+
+                sprite.appear=function(){
+                    freeze=true; 
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:0.35}, 2000 )
+                                        .onUpdate( function () {                               
+                                            sprite.position.y = this.y;                                        
+                                            sprite.position.x=a+0.05*Math.cos(Math.random()*6.28);
+                                            sprite.position.z=c+0.05*Math.cos(Math.random()*6.28);
+                                            let enface_l=enface().l;
+                                            let enface_c=enface().c;    
+                                            Laby[enface_l][enface_c]=5;                                           
+                                        })
+                                        
+                                        .onComplete( ()=>{
+                                            freeze=false;
+                                            objets.prendre.alpha=1;
+
+
+                                        })
+                                    .delay(1000)
+                                    .start();
+
                 }
-                                                          
-            );
-           
-            
-           
-            
+                
+                sprite.replace=function(l,d){ 
+                    freeze=true;   
+                    Laby[l][d]=5;
+                    sprite.position.x=-10+1*d;
+                    sprite.position.z=-10+1*l+0.5;
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    sprite.L=l;
+                    sprite.C=d;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:0.35}, 500 )
+                                        .onUpdate( function () {                               
+                                            sprite.position.y = this.y;
+                                            sprite.position.x=a
+                                            sprite.position.z=c                                       
+                                        } )
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+                }  
+                return(sprite);                           
+            }
+        
+            //////////////////////// Création des stèles ///////////////////////////            
+            var steleMaterial = new THREE.SpriteMaterial( { map: textures["stele"], color: 0xffffff } );
+            steleMaterial.fog=true;
+            for(let i=0;i<Laby.length;i++){
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==4){
+                    let c=Stele(1,3,1,steleMaterial);
+                    c.position.x=-10+1*j;
+                    c.position.z=-10+1*i+0.5;
+                    c.position.y=0.35;
+                    c.scale.x=c.scale.y=c.scale.z=0.7;
+                    c.L=i;
+                    c.C=j;
+                    c.enigme=big_enigme[0];
+                    liste_stel.push(c);
+                    pyramide.add( c ); 
+                    }
+                    }
+                }   
+            function Stele(l,L,h,material){  
+                var sprite = new THREE.Sprite( material );   
+                
+                sprite.disappear=function(){
+                    freeze=true; 
+                    let a=sprite.position.x;
+                    let c=sprite.position.z;
+                    let twe=new TWEEN.Tween( { y:sprite.position.y } )
+                                        .to( { y:-1}, 3000 )
+                                        .onUpdate( function () {                               
+                                            sprite.position.y = this.y;                                        
+                                            sprite.position.x=a+0.05*Math.cos(Math.random()*6.28);
+                                            sprite.position.z=c+0.05*Math.cos(Math.random()*6.28)                                      
+                                        } )
+                                        
+                                        .onComplete( ()=>{freeze=false}
+                                            )
+                                    .start();
+
+                }
+                
+                return(sprite);                           
+            }            
+        
+        
             ///////////////////////// Création des momies //////////////////////////////////////////////
-            var spriteMap = new THREE.TextureLoader().load( "images/momie.png", function ( texture ) {
-                
-                var spriteMaterial = new THREE.SpriteMaterial( { map: texture, color: 0xffffff } );
-                spriteMaterial.fog=true;
-                for(let i=0;i<Laby.length;i++){
-                 for(let j=0;j<Laby.length;j++){
-                     if(Laby[i][j]==3){
-                        let c=Momie(1,3,1,spriteMaterial);
-                        c.position.x=-10+1*j;
-                        c.position.z=-10+1*i+0.5;
-                        c.position.y=0.35;
-                        c.scale.x=c.scale.y=c.scale.z=0.7
-                        c.L=i;
-                        c.C=j;
-                        c.enigme=small_enigme[0];
-                        liste_mom.push(c)
-                        pyramide.add( c ); 
-                        }
-                        }
-                    }
-                
-                }
-                                                          
-            );
             
-           
-                
-                         
-            ///////////////////////// Création du sol/////////////////////////////////////////////////////////////////////////////
-            var loader_sol = new THREE.TextureLoader();
-            // load a resource
-            loader_sol.load(
-                // resource URL
-                'images/sand.jpg',
-
-                // onLoad callback
-                function ( texture ) {
-                    // in this example we create the material when the texture is loaded
-                    
-                    texture.wrapS = THREE.RepeatWrapping;
-                    texture.wrapT = THREE.RepeatWrapping;
-                    texture.repeat.set( 20, 20 );                    
-                    material_sol = new THREE.MeshPhongMaterial( {
-                        map: texture,color:0xFFFFFF
-                     } );
-                    
-                    let ground=Sol(20,0.01,20,material_sol);
-                    pyramide.add( ground ); 
-                }
-                
-            );
-                
-            /////////////////////////////////////////////////////////
-                
-             
-                
-              ///////////////////////// Création des murs/////////////////////////////////////////////////////////////////////////////
-          
-               var loader_mur = new THREE.TextureLoader();
-                // load a resource
-                loader_mur.load(
-                    // resource URL
-                    'images/gold.jpg',
-
-                    // onLoad callback
-                    function ( texture ) {
-                        // in this example we create the material when the texture is loaded
-                
-                        material_m1 = new THREE.MeshPhongMaterial( { map: texture, color:0xFFFFFF,specular: 0x000000, shininess: 10 } );
-                
-                
-                for(let i=0;i<Laby.length;i++){
-                 for(let j=0;j<Laby.length;j++){
-                     if(Laby[i][j]==1){
-                     let c=Cube(1,3,1,material_m1);
-                     c.position.x=-10+1*j;
-                     c.position.z=-10+1*i+0.5;
-                     c.position.y=0.5;
-                        pyramide.add( c ); 
-                        }
-                        }
+            var momieMaterial = new THREE.SpriteMaterial( { map: textures["momie"], color: 0xffffff } );
+            momieMaterial.fog=true;
+            for(let i=0;i<Laby.length;i++){
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==3){
+                    let c=Momie(1,3,1,momieMaterial);
+                    c.position.x=-10+1*j;
+                    c.position.z=-10+1*i+0.5;
+                    c.position.y=0.35;
+                    c.scale.x=c.scale.y=c.scale.z=0.7
+                    c.L=i;
+                    c.C=j;
+                    c.enigme=small_enigme[0];
+                    liste_mom.push(c)
+                    pyramide.add( c ); 
                     }
-              })
-                
-              ///////////////////////// Création des bordures/////////////////////////////////////////////////////////////////////////////
-          
-               var loader_bord = new THREE.TextureLoader();
-                // load a resource
-                loader_bord.load(
-                    // resource URL
-                    'images/gold.jpg',
-
-                    // onLoad callback
-                    function ( texture ) {
-                        // in this example we create the material when the texture is loaded
-                         //texture.wrapS = THREE.RepeatWrapping;
-                        // texture.wrapT = THREE.RepeatWrapping;
-                         //texture.repeat.set( 5, 1 );   
-                        material_bord = new THREE.MeshLambertMaterial( { color:0xFF6600, specular: 0x000000, shininess: 10 } );
-                        
-                        
-                        
-                       
-                
-                for(let i=0;i<Laby.length;i++){
-                 for(let j=0;j<Laby.length;j++){
-                     if(Laby[i][j]==1){
-                     let  c=Bord(0.5,0.2,0.05,0.05,material_bord)                    
-                     c.position.x=-10+1*j;
-                     c.position.z=-10+1*i;
-                     c.position.y=0;
-                        pyramide.add( c ); 
-                        }
-                        }
-                    }
-              })
-                
-                document.onkeydown=keyPressed;
-           
-                            
-//            var bgtexture= THREE.ImageUtils.loadTexture( "images/background.jpg");            
-//            var geometry = new THREE.PlaneGeometry( 90, 90, 32 );
-//            var material = new THREE.MeshBasicMaterial( {map:bgtexture, side: THREE.DoubleSide} );
-//            var plane = new THREE.Mesh( geometry, material );
-//            plane.position.z=-30;
-//            camera.add( plane );
-//            scene.add(camera);            
-            }
-
-            function get_stele(L,C){                         
-                for(let i=0;i<liste_stel.length;i++){
-                    if(liste_stel[i].L==L && liste_stel[i].C==C){
-                        return(liste_stel[i])
                     }
                 }
-            }
 
-            function get_momie(L,C){                         
-                for(let i=0;i<liste_mom.length;i++){
-                    if(liste_mom[i].L==L && liste_mom[i].C==C){
-                        return(liste_mom[i])
-                    }
-                }
-            }
-
-                       
-            var tw //la tween de déplacement
-            function keyPressed(event) {  
-		        //console.log(event.keyCode)
-                if(freeze==false){
-                    freeze=true;
-                    switch(event.keyCode) {
-                        case 37:{
-                            let f=camera.rotation.y+3.1415/2;
-                            rotation+=90
-                            if(rotation>180){rotation=-90}
-                            tw=new TWEEN.Tween( { y:camera.rotation.y   } )
-                                    .to( { y:f }, 250 )
-                                    .onUpdate( function () {                               
-                                    camera.rotation.y = this.y;
-                                    } )
-                                    .onComplete( ()=>{freeze=false}
-                                        )
-                                .start();
-
-                        break;}
-                            
-                        case 39:{
-                            rotation-=90
-                            if(rotation<-90){rotation=180}
-                            let f=camera.rotation.y-3.1415/2;
-                            tw=new TWEEN.Tween( { y:camera.rotation.y   } )
-                                    .to( { y:f }, 250 )
-                                    .onUpdate( function () {                               
-                                    camera.rotation.y = this.y;
-                                    } )
-                                    .onComplete( ()=>{freeze=false}
-                                        )
-                                .start();
-
-                        break;}
-                            
-                        case 38:{                            
-                            if(collision(rotation)){
-                                Laby[pos_l][pos_c]=0;
-                                let f1=camera.position.z
-                                let f2=camera.position.x                            
-
-                                if(rotation==0){                            
-                                 f1=camera.position.z-1;
-                                 pos_l--;
-                                }
-                                if(rotation==180){                            
-                                 f1=camera.position.z+1;
-                                 pos_l++;
-                                }
-                                if(rotation==90){                            
-                                 f2=camera.position.x-1; 
-                                 pos_c--;
-                                }
-                                if(rotation==-90){                            
-                                 f2=camera.position.x+1;  
-                                 pos_c++;
-                                }
-                                Laby[pos_l][pos_c]=2;
-                                //debug_laby();
-                                tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
-                                        .to( { z:f1,x:f2 }, 250 )
-                                        .onUpdate( function () {                               
-                                        camera.position.z = this.z;
-                                        spotLight.position.z=this.z;
-                                        camera.position.x = this.x;
-                                        spotLight.position.x=this.x;
-                                        } )
-                                        .onComplete( ()=>{freeze=false}
-                                            )
-                                    .start();
-                            } else {
-                                let enface_l=pos_l
-                                let enface_c=pos_c
-                                if(rotation==0){                            
-                                 enface_l--;                                 
-                                }
-                                if(rotation==180){                            
-                                 enface_l++;
-                                }
-                                if(rotation==90){                            
-                                 enface_c--;
-                                }
-                                if(rotation==-90){                            
-                                 enface_c++;
-                                }
-                                if(Laby[enface_l][enface_c]==4){
-                                    let e=get_stele(enface_l,enface_c).enigme;                                   
-                                    Main_enigme.addChild(e);
-                                    eng.style.zIndex=2500;                                    
-                                }
-                                if(Laby[enface_l][enface_c]==3){
-                                    let e=get_momie(enface_l,enface_c).enigme;                                   
-                                    let b=dialogue(e[0],"momie",[e[1]],["#fc00ed"],["suite"]);
-                                    b.x=20;
-                                    b.y=20;            
-                                    b.addEventListener("faux",()=>{tremble=0.3;});
-                                    b.addEventListener("vrai",()=>{                                        
-                                        get_momie(enface_l,enface_c).clear(b,enface_l,enface_c);
-                                    });
-                                    Main_enigme.addChild(b)                                    
-                                }
-                                //freeze=false
-                            }
-                        
-                        break;}
-                        case 40:{
-                            let r;
-                            if(rotation==90 || rotation==-90){r=-rotation}
-                            if(rotation==0){r=180}
-                            if(rotation==180){r=0}
-                            if(collision(r)){
-                                Laby[pos_l][pos_c]=0;
-                                let f1=camera.position.z
-                                let f2=camera.position.x                            
-
-                                if(rotation==0){                            
-                                 f1=camera.position.z+1;
-                                 pos_l++;
-                                }
-                                if(rotation==180){                            
-                                 f1=camera.position.z-1;
-                                 pos_l--;
-                                }
-                                if(rotation==90){                            
-                                 f2=camera.position.x+1; 
-                                 pos_c++;
-                                }
-                                if(rotation==-90){                            
-                                 f2=camera.position.x-1;  
-                                 pos_c--;
-                                }
-                                Laby[pos_l][pos_c]=2;
-                                //debug_laby();
-                                tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
-                                        .to( { z:f1,x:f2 }, 250 )
-                                        .onUpdate( function () {                               
-                                        camera.position.z = this.z;
-                                        spotLight.position.z=this.z;
-                                        camera.position.x = this.x;
-                                        spotLight.position.x=this.x;
-                                        } )
-                                        .onComplete( ()=>{freeze=false}
-                                            )
-                                    .start();
-                            } else {freeze=false}
-                        
-                        break;}
-                        default: freeze=false;
-                    }
-                }
-                //debug_laby()
-            }
-            
-            function collision(dir){
-                switch(dir){
-                    case 0: if(Laby[pos_l-1][pos_c]!=0){return false};break;
-                    case -90: if(Laby[pos_l][pos_c+1]!=0){return false};break;
-                    case 90: if(Laby[pos_l][pos_c-1]!=0){return false};break;
-                    case 180: if(Laby[pos_l+1][pos_c]!=0){return false};break;
-                }
-                return(true);
-                
-            }
-            
-            
-                    
-            
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //Gestion du click sur les cubes       
-            
-            //renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
-           // renderer.domElement.addEventListener( 'touchstart', onDocumentTouchStart, false );
-            
-            var  raycaster = new THREE.Raycaster();
-			var  mouse = new THREE.Vector2();
-            
-            function onDocumentTouchStart( event ) {				
-				event.preventDefault();
-				event.clientX = event.touches[0].clientX;
-				event.clientY = event.touches[0].clientY;
-				onDocumentMouseDown( event );
-
-			}	
-
-			function onDocumentMouseDown( event ) {
-                
-				event.preventDefault();               
-				mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
-				mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;              
-				raycaster.setFromCamera( mouse, camera );
-				var intersects = raycaster.intersectObjects( objects );
-				if ( intersects.length > 0 ) {                     
-                    current=intersects[0].object;   
-                    createjs.Tween.get(pharaon).to({y:600},500,createjs.Ease.circOut);
-                    if(current.clicable==true){
-                    var dep=new THREE.Vector3( 0, dimension, dimension+1 )
-                    dep.add(intersects[0].point);
-                    dep.divideScalar(2);
-                    var t=new TWEEN.Tween( { x:camera.position.x,y:camera.position.y,z:camera.position.z   } )
-                    .to( { x:0,y:dimension,z:dimension+1 }, 250 )
-                    .to( { x:dep.x,y:dep.y,z:dep.z }, 250 )
-                    .onUpdate( function () {
-                           camera.position.x = this.x ;
-                           camera.position.y = this.y;
-                           camera.position.z = this.z;
-                           camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
-                           
-                            } )
-                            .start();
-                  
-                    var d=document.getElementById("Enter")
-                    d.style.display="block"  
-                    var t=document.getElementById("nombre")
-                    t.value=current.nombre;
-                    var b=document.getElementById("valider")
-                    b.addEventListener("click",Change)
-                    t.focus();
-                    }
-
-				}
-				
-			}
-            
-            function Change(e){
-               
-                document.getElementById("valider").removeEventListener("click",Change);
-                current.nombre=document.getElementById("nombre").value;
-                current.update_Nombre(current.nombre,current)
-                var d=document.getElementById("Enter")
-                d.style.display="none" 
-               var t=new TWEEN.Tween( { x:camera.position.x,y:camera.position.y,z:camera.position.z   } )
-                    .to( { x:0,y:dimension,z:dimension+1 }, 250 )
-                    .onUpdate( function () {
-                           camera.position.x = this.x ;
-                           camera.position.y = this.y;
-                           camera.position.z = this.z;
-                           camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
-                           
-                            } )
-                            .start();
-                
-            }
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // Déclaration de l'objet "Cube"            
-           function Cube(l,L,h,material_mur){        
-               
-                var geometry = new THREE.BoxGeometry( l,L,h );               
-                this.cube = new THREE.Mesh( geometry, material_mur );           
-                              
-              
-                this.cube.Shake=function(c){
-                    var origine=c.position.clone();
-                    function moove(){
-                    c.position.x=origine.x+Math.random()*0.1
-                    c.position.y=origine.y+Math.random()*0.1
-                    c.position.z=origine.z+Math.random()*0.1
-                   
-                    }
-                    var r=window.setInterval(moove,50);
-                    setTimeout(function(){window.clearInterval(r);c.position.x=origine.x;c.position.y=origine.y;c.position.z=origine.z},2000);
-                    
-                }
-                
-                return(this.cube);
-                            
-                
-            }
-            
-             // Déclaration de l'objet "Momie"            
-           function Momie(l,L,h,material){  
-                
-                var sprite = new THREE.Sprite( material );
+            function Momie(l,L,h,material){ 
+                var sprite = new THREE.Sprite( material ); 
                 sprite.clear=function(b,l,d){
                     b.clear();
+                    freeze=true;
+                    document.getElementById("contenu").value="";
                     Laby[l][d]=0;
                     let a=sprite.position.x;
                     let c=sprite.position.z;
@@ -682,111 +548,501 @@
                                             )
                                     .start();
                 }          
-                return(sprite);                           
-                
+                return(sprite);                          
             }
             
-               // Déclaration de l'objet "Stele"            
-           function Stele(l,L,h,material){  
-                var sprite = new THREE.Sprite( material );                  
-                return(sprite);                           
-                
-            }
+                        
+            ///////////////////////// Création du sol/////////////////////////////////////////////////////////////////////////////
+            let solTexture=textures["sand"];
+            solTexture.wrapS = THREE.RepeatWrapping;
+            solTexture.wrapT = THREE.RepeatWrapping;
+            solTexture.repeat.set( 20, 20 );
+            var solMaterial = new THREE.MeshPhongMaterial( { map: solTexture, color: 0xffffff } );
+            let ground=Sol(20,0.01,20,solMaterial);
+            pyramide.add( ground );    
+            function Sol(l,L,h,material_sol){ 
+                var geometry = new THREE.BoxGeometry( l,L,h );                
+                this.cube = new THREE.Mesh( geometry, material_sol );                  
+                return(this.cube);                        
+            }      
             
-            
-            
-            
-              // Déclaration de l'objet "Bord"            
-           function Bord(l,L,h,e,material){        
-               var shape = new THREE.Shape();
+            ///////////////////////// Création des murs et bordures /////////////////////////////////////////////////////////////////////////////
+            var murMaterial1 = new THREE.MeshPhongMaterial( { map: textures["mur"], color:0xFFFFFF,specular: 0x000000, shininess: 10 } ); 
+            var murMaterial2 = new THREE.MeshPhongMaterial( { map: textures["mur2"], color:0xFFFFFF,specular: 0x000000, shininess: 10 } ); 
+            var murMaterial3 = new THREE.MeshPhongMaterial( { map: textures["mur3"], color:0xFFFFFF,specular: 0x000000, shininess: 10 } );  
+            var bordMaterial = new THREE.MeshLambertMaterial( { color:0xFF6600} )          
+            let count=0;
+            for(let i=0;i<Laby.length;i++){
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==1){
+                    count++;
+                    let c;
+                    if(count%2==0){
+                        c=Cube(1,3,1,murMaterial1);
+                    } else {
+                        let r=Math.random();
+                        if(r<0.25){
+                        c=Cube(1,3,1,murMaterial2);}
+                        if(r>0.75){
+                        c=Cube(1,3,1,murMaterial3);   
+                        }
+                        if(r<=0.75 && r>=0.25){
+                        c=Cube(1,3,1,murMaterial1);   
+                        }
+                    }
+                    c.position.x=-10+1*j;
+                    c.position.z=-10+1*i+0.5;
+                    c.position.y=0.5;
+                    pyramide.add( c ); 
+                    let  b=Bord(0.5,0.2,0.05,0.05,bordMaterial)                    
+                    b.position.x=-10+1*j;
+                    b.position.z=-10+1*i;
+                    b.position.y=0;
+                    pyramide.add( b );
+                    }
+                    }
+                }
+            function Cube(l,L,h,material_mur){  
+                var geometry = new THREE.BoxGeometry( l,L,h );               
+                this.cube = new THREE.Mesh( geometry, material_mur );          
+                this.cube.Shake=function(c){
+                    var origine=c.position.clone();
+                    function moove(){
+                    c.position.x=origine.x+Math.random()*0.1
+                    c.position.y=origine.y+Math.random()*0.1
+                    c.position.z=origine.z+Math.random()*0.1
+                    }
+                    var r=window.setInterval(moove,50);
+                    setTimeout(function(){window.clearInterval(r);c.position.x=origine.x;c.position.y=origine.y;c.position.z=origine.z},2000);
+                    }            
+                return(this.cube);          
+                }
+            function Bord(l,L,h,e,material){        
+            var shape = new THREE.Shape();
                 shape.moveTo( -l,h );
                 shape.lineTo( l, h );
                 shape.lineTo( l+e, 0 );
                 shape.lineTo( -l-e, 0 );
                 shape.lineTo( -l, h );
-
                 var extrudeSettings = {
                     steps: 2,
                     amount: 1,                   
                     bevelEnabled: true,
-	                bevelThickness: e,
-                    bevelSize: e
-                   
+                    bevelThickness: e,
+                    bevelSize: e                   
                 };
                 var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );                              
-                this.cube = new THREE.Mesh( geometry, material ); 
-               
-             
-              
+                this.cube = new THREE.Mesh( geometry, material );                
+                return(this.cube);                 
+            } 
+            //////////////////////////////////////////////////////////////////////////////////////////////
+        
                 
-                return(this.cube);
+    
+                
+            document.onkeydown=keyPressed;
+        }
                             
-                
-            }
-            
-            
-            
-             // Déclaration de l'objet "Sol"            
-           function Sol(l,L,h,material_sol){                  
-              
-                
-                var geometry = new THREE.BoxGeometry( l,L,h );                
-                this.cube = new THREE.Mesh( geometry, material_sol );                  
-                              
-               
-                
-                // fonction mettant à jour la texture du cube
-//                this.cube.update_texture=function(c){                    
-//                    texture_sol.wrapS = THREE.RepeatWrapping;
-//                    texture_sol.wrapT = THREE.RepeatWrapping;
-//                    texture_sol.repeat.set( 10, 10 );                   
-//                    c.material.map=texture_sol;
-//                    c.material.map.needsUpdate = true;
-//                }
-              
-                
-              // this.cube.update_texture(this.cube);                
-          
-                
-                return(this.cube);
-                            
-                
-            }
-            
-            
-            
-            
-            
+//            var bgtexture= THREE.ImageUtils.loadTexture( "images/background.jpg");            
+//            var geometry = new THREE.PlaneGeometry( 90, 90, 32 );
+//            var material = new THREE.MeshBasicMaterial( {map:bgtexture, side: THREE.DoubleSide} );
+//            var plane = new THREE.Mesh( geometry, material );
+//            plane.position.z=-30;
+//            camera.add( plane );
+//            scene.add(camera);            
             
 
-          
-            
-           ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-           // fonction de rendu  
-           function render() {
-                requestAnimationFrame( render );   
-                //renderer.render(backgroundScene , backgroundCamera );
-                renderer.render( scene, camera );
-                TWEEN.update();
-                if(tremble>0){                   
-                    camera.position.x=-10+1*pos_c+tremble*Math.cos(6.28*Math.random());
-                    camera.position.z=-10+1*pos_l+0.5+tremble*Math.cos(6.28*Math.random());
-                    tremble=tremble-0.01
-                    }     
-               
+        function get_stele(L,C){                         
+            for(let i=0;i<liste_stel.length;i++){
+                if(liste_stel[i].L==L && liste_stel[i].C==C){
+                    return(liste_stel[i])
+                }
             }
-            render();
-            
-            /////////////////////////////// fonction de debu Laby
-            function debug_laby(){ 
-                for(let i=0;i<Laby.length;i++){
-                     let l=""
-                     for(let j=0;j<Laby.length;j++){
-                         l=l+Laby[i][j];
-                     } 
-                     console.log(l)
-                 }
+        }
+
+        function get_momie(L,C){                         
+            for(let i=0;i<liste_mom.length;i++){
+                if(liste_mom[i].L==L && liste_mom[i].C==C){
+                    return(liste_mom[i])
+                }
             }
+        }
+
+        function get_objet(L,C){                         
+            for(let i=0;i<liste_objets.length;i++){
+                if(liste_objets[i].L==L && liste_objets[i].C==C){
+                    return(liste_objets[i])
+                }
+            }
+        }
+
+        function detect_objet(dir){
+            let obstacle=false                
+            switch(dir){
+                case 0: if(Laby[pos_l-1][pos_c]==5){obstacle=true};break;
+                case -90: if(Laby[pos_l][pos_c+1]==5){obstacle=true};break;
+                case 90: if(Laby[pos_l][pos_c-1]==5){obstacle=true};break;
+                case 180: if(Laby[pos_l+1][pos_c]==5){obstacle=true};break;
+            }               
+            return(obstacle);
+        }
+        
+
+        function intro(){
+            let b=dialogue("Bonjour, je m'appelle Khaal Culatris et je serai ton guide dans cette aventure.\nPour te déplacer dans ce labyrinthe, il te faut utiliser les flèches du clavier. \nUn inventaire pour l'instant vide se situe ci-dessous.\nTu en auras certainement besoin pour résoudre les énigmes qui te seront proposées.\nJe te conseille de plus de te munir d'une feuille de papier et d'un crayon.","qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+            b.x=640;
+            b.y=330;            
+            b.addEventListener("suite",()=>{b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);montre=setInterval('chrono()',1000) })
+            Main_control.addChild(b)
+        }
+
+        function chrono(){
+            if(temps<0){
+                temps=0;
+                clearInterval(montre);
+                alert("perdu !");
+            }
+            temps-=1;
+            let min=Math.floor(temps/60);
+            let sec=temps%60;
+            document.getElementById("chr").innerHTML="Temps: "+min+"min "+sec+"s";
+        }
+
+        function first_objet(){            
+            premier_objet=false;
+            mode="enigme"
+            freeze=true;
+            let t="Bravo ! Tu viens de découvrir ton premier objet. \nTu peux le ranger dans ton inventaire.\nPar la suite, en le sélectionnant, tu pourras le déposer ou l'utiliser dans une énigme."
+            let b=dialogue(t,"qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+            b.x=640;
+            b.y=330;            
+            b.addEventListener("suite",()=>{b.clear();objets.prendre.alpha=1;createjs.Tween.get(phara).wait(300).to({x:1000},500);})
+            Main_control.addChild(b)
+        }
+
+        function trouve_stele(){
+            let t="Une stèle étrange comporte un mécanisme. \nVeux-tu essayer de résoudre l'énigme qu'elle propose ?"
+            let b=dialogue(t,"qcm",["OUI","NON"],["#fc00ed","#fc00ed"],["oui","non"]);
+            b.x=640;
+            b.y=330;   
+            Main_control.addChild(b)         
+            b.addEventListener("non",()=>{b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);By_pass();mode="laby"})
+            b.addEventListener("oui",()=>{  b.clear();
+                                            mode="enigme";
+                                            let enface_l=enface().l;
+                                            let enface_c=enface().c;                                           
+                                            createjs.Tween.get(phara).wait(300).to({x:1000},500);
+                                            let e=get_stele(enface_l,enface_c).enigme;    
+                                            e.x=-1000;  
+                                            e.quitter.visible=false;                                                                        
+                                            Main_enigme.addChild(e);                                               
+                                            createjs.Tween.get(e).to({x:0},500)
+                                            eng.style.zIndex=4000; 
+                                            e.addEventListener("quitter",()=>{ 
+                                                objets.reset();               
+                                                createjs.Tween.get(e).to({x:1000},500).call(()=>{Main_enigme.removeChild(e);eng.style.zIndex=1000;By_pass();mode="laby" })
+                                            })
+                                            e.addEventListener("valider",()=>{
+                                                if(e.evaluer()=="juste"){
+                                                objets.reset();               
+                                                createjs.Tween.get(e).to({x:1000},500).call(()=>{
+                                                    Main_enigme.removeChild(e);
+                                                    eng.style.zIndex=1000;By_pass();
+                                                    get_stele(enface_l,enface_c).disappear();
+                                                    get_objet(enface_l,enface_c).appear();
+                                                    mode="laby";
+                                                    })  
+                                                }
+                                            })
+                                            if(e.bloque==true){  
+                                                objets.bloque=true;
+                                                eng.style.zIndex=1000; 
+                                                createjs.Tween.get(phara,{override:true}).to({x:650},500).call(()=>{
+                                                    let t2="Le mécanisme ne semble pas fonctionner.\nPeut-être qu'un objet de ton inventaire serait utile ?"
+                                                    let b2=dialogue(t2,"qcm",["OK"],["#fc00ed"],["ok"]);
+                                                    b2.x=640;
+                                                    b2.y=330;   
+                                                    Main_control.addChild(b2)    
+                                                    b2.addEventListener("ok",()=>{b2.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);eng.style.zIndex=4000;objets.bloque=false; e.quitter.visible=true;})
+                                                    }
+                                                )
+                                            } else { e.quitter.visible=true;}
+                            })
+        }         
+            
+            var tw //la tween de déplacement
+
+        function By_pass(){
+            let enface_l=enface().l;
+            let enface_c=enface().c           
+            if(Laby[enface_l][enface_c]==0){
+                freeze=true;
+                let f1=camera.position.z
+                let f2=camera.position.x                            
+
+                if(rotation==0){                            
+                    f1=camera.position.z-1;
+                    pos_l--;
+                    }
+                if(rotation==180){                            
+                    f1=camera.position.z+1;
+                    pos_l++;
+                                }
+                if(rotation==90){                            
+                    f2=camera.position.x-1; 
+                    pos_c--;
+                }
+                if(rotation==-90){                            
+                    f2=camera.position.x+1;  
+                    pos_c++;
+                }      
+
+                tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
+                        .to( { z:f1,x:f2 }, 250 )
+                        .onUpdate( function () {                               
+                        camera.position.z = this.z;
+                        spotLight.position.z=this.z;
+                        camera.position.x = this.x;
+                        spotLight.position.x=this.x;
+                        } )
+                        .onComplete( ()=>{freeze=false}
+                            )
+                    .start();
+                }
+
+        }
+
+        function keyPressed(event) {  
+            //console.log(event.keyCode)           
+            if(mode=="enigme"){return false}
+            if(freeze==false){
+                objets.prendre.alpha= objets.utiliser.alpha=0.3;
+                freeze=true;                   
+                switch(event.keyCode) {
+                    case 32:{
+                        debug_laby();
+                        freeze=false;
+                        break;
+                    }
+
+                    case 37:{
+                        let f=camera.rotation.y+3.1415/2;
+                        rotation+=90
+                        if(rotation>180){rotation=-90}
+                        tw=new TWEEN.Tween( { y:camera.rotation.y   } )
+                                .to( { y:f }, 250 )
+                                .onUpdate( function () {                               
+                                camera.rotation.y = this.y;
+                                } )
+                                .onComplete( ()=>{freeze=false}
+                                    )
+                            .start();
+
+                    break;}
+                        
+                    case 39:{
+                        rotation-=90
+                        if(rotation<-90){rotation=180}
+                        let f=camera.rotation.y-3.1415/2;
+                        tw=new TWEEN.Tween( { y:camera.rotation.y   } )
+                                .to( { y:f }, 250 )
+                                .onUpdate( function () {                               
+                                camera.rotation.y = this.y;
+                                } )
+                                .onComplete( ()=>{freeze=false}
+                                    )
+                            .start();
+
+                    break;}
+                        
+                    case 38:{  
+                        if(collision(rotation)=="obj" && premier_objet==true){
+                            return false;
+                        }                          
+                        if((collision(rotation)=="rien" || collision(rotation)=="obj") ){      
+                            
+                            let f1=camera.position.z
+                            let f2=camera.position.x                            
+
+                            if(rotation==0){                            
+                                f1=camera.position.z-1;
+                                pos_l--;
+                            }
+                            if(rotation==180){                            
+                                f1=camera.position.z+1;
+                                pos_l++;
+                            }
+                            if(rotation==90){                            
+                                f2=camera.position.x-1; 
+                                pos_c--;
+                            }
+                            if(rotation==-90){                            
+                                f2=camera.position.x+1;  
+                                pos_c++;
+                            }
+                         
+                            tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
+                                    .to( { z:f1,x:f2 }, 250 )
+                                    .onUpdate( function () {                               
+                                    camera.position.z = this.z;
+                                    spotLight.position.z=this.z;
+                                    camera.position.x = this.x;
+                                    spotLight.position.x=this.x;
+                                    } )
+                                    .onComplete( ()=>{freeze=false}
+                                        )
+                                .start();
+                        } else {
+                            //debug_laby();
+                            let enface_l=enface().l;
+                            let enface_c=enface().c;                            
+                            if(Laby[enface_l][enface_c]==4){
+                                createjs.Tween.get(phara).to({x:650},500).call(trouve_stele);
+                                                                    
+                            }
+                            if(Laby[enface_l][enface_c]==3){
+                                let e=get_momie(enface_l,enface_c).enigme;                                   
+                                let b=dialogue(e[0],"momie",[e[1]],["#fc00ed"],["suite"]);
+                                b.x=20;
+                                b.y=20;            
+                                b.addEventListener("faux",()=>{tremble=0.3;});
+                                b.addEventListener("vrai",()=>{                                        
+                                    get_momie(enface_l,enface_c).clear(b,enface_l,enface_c);
+                                });
+                                Main_enigme.addChild(b)                                    
+                            }
+                            if(collision(rotation)=="obj"){                                                                      
+                                objets.prendre.alpha=1;
+                            }
+
+                            if(Laby[enface_l][enface_c]==1){
+                            freeze=false
+                            }
+                        }
+                    
+                    break;}
+                    case 40:{
+                        objets.prendre.alpha= objets.utiliser.alpha=0.3;
+                        let r;
+                        if(rotation==90 || rotation==-90){r=-rotation}
+                        if(rotation==0){r=180}
+                        if(rotation==180){r=0}
+                        if(collision(r)=="rien" || collision(rotation)=="obj"){
+                            //Laby[pos_l][pos_c]=0;
+                            let f1=camera.position.z
+                            let f2=camera.position.x                            
+
+                            if(rotation==0){                            
+                                f1=camera.position.z+1;
+                                pos_l++;
+                            }
+                            if(rotation==180){                            
+                                f1=camera.position.z-1;
+                                pos_l--;
+                            }
+                            if(rotation==90){                            
+                                f2=camera.position.x+1; 
+                                pos_c++;
+                            }
+                            if(rotation==-90){                            
+                                f2=camera.position.x-1;  
+                                pos_c--;
+                            }
+                            //Laby[pos_l][pos_c]=2;
+                            //debug_laby();
+                            tw=new TWEEN.Tween( { z:camera.position.z,x:camera.position.x  } )
+                                    .to( { z:f1,x:f2 }, 250 )
+                                    .onUpdate( function () {                               
+                                    camera.position.z = this.z;
+                                    spotLight.position.z=this.z;
+                                    camera.position.x = this.x;
+                                    spotLight.position.x=this.x;
+                                    } )
+                                    .onComplete( ()=>{freeze=false}
+                                        )
+                                .start();
+                        } else {freeze=false}
+                    
+                    break;}
+                    default: freeze=false;
+                }
+            }
+            
+            if(detect_objet(rotation)){
+                objets.prendre.alpha=1;
+                if(premier_objet==true){
+                    freeze=true;
+                    premier_objet=false;
+                    objets.prendre.alpha=0.3;
+                    createjs.Tween.get(phara).to({x:650},500);
+                    first_objet();                                                                    
+                    }
+            }
+        }
+            
+        function collision(dir){
+            let obstacle="rien"
+            switch(dir){
+                case 0: if(Laby[pos_l-1][pos_c]!=0){obstacle="mur"};break;
+                case -90: if(Laby[pos_l][pos_c+1]!=0){obstacle="mur"};break;
+                case 90: if(Laby[pos_l][pos_c-1]!=0){obstacle="mur"};break;
+                case 180: if(Laby[pos_l+1][pos_c]!=0){obstacle="mur"};break;
+            }
+            switch(dir){
+                case 0: if(Laby[pos_l-1][pos_c]==5){obstacle="obj"};break;
+                case -90: if(Laby[pos_l][pos_c+1]==5){obstacle="obj"};break;
+                case 90: if(Laby[pos_l][pos_c-1]==5){obstacle="obj"};break;
+                case 180: if(Laby[pos_l+1][pos_c]==5){obstacle="obj"};break;
+            }
+            
+            return(obstacle);
+            
+        }
+
+        function enface(){
+            let enface_l=pos_l
+            let enface_c=pos_c
+            if(rotation==0){                           
+                enface_l--;                                 
+            }
+            if(rotation==180){                            
+                enface_l++;
+            }
+            if(rotation==90){                            
+                enface_c--;
+            }
+            if(rotation==-90){                            
+                enface_c++;
+            }
+            return({l:enface_l,c:enface_c});
+        }
+            
+  
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // fonction de rendu  
+        function render() {
+            requestAnimationFrame( render );   
+            //renderer.render(backgroundScene , backgroundCamera );
+            renderer.render( scene, camera );
+            TWEEN.update();
+            if(tremble>0){                   
+                camera.position.x=-10+1*pos_c+tremble*Math.cos(6.28*Math.random());
+                camera.position.z=-10+1*pos_l+0.5+tremble*Math.cos(6.28*Math.random());
+                tremble=tremble-0.01
+                }     
+            
+        }        
+        
+        /////////////////////////////// fonction de debu Laby
+        function debug_laby(){ 
+            for(let i=0;i<Laby.length;i++){
+                    let l=""
+                    for(let j=0;j<Laby.length;j++){
+                        l=l+Laby[i][j];
+                    } 
+                    console.log(l)
+                }
+        }
                         
            
             
@@ -794,19 +1050,17 @@
         
    
     <canvas id="controleur" width="200" height="400" style="position: absolute; z-index: 2000;"></canvas>
+    <canvas id="inv" width="735" height="60" style="position: absolute; z-index: 3000;"></canvas>
     <div id="enigme" style="position: absolute;">
-        <canvas id="eng" width="200" height="400" style="position: absolute; z-index: 2;"></canvas>
+        <canvas id="eng" width="800" height="400" style="position: absolute; z-index: 1000;"></canvas>        
         <form id="reponse" class="popup">
         Réponse:<input class="champ" id="contenu" type="text" name="fname" maxlength="12">
         <input id="envoyer" class="bouton" type="button" value="OK">
     </form> 
     </div>
+    <p class="chrono" id="chr">Temps: 60min</p>        
+    <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="position: absolute; right:0"><img alt="Licence Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br /></a>.
     
-        
-    
-        
-        
-    
-	</body>
+    </body>
     
 </html>

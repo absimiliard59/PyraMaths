@@ -1,7 +1,17 @@
-@font-face{
+html {
+	/* L'image est positionnée en fond et est centrée */
+	background: url(../images/fond.jpg); /*no-repeat center center fixed;
+	/* Ajout de la propriété avec les préfixes pour tous les moteurs de rendu */
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	}
+
+/* @font-face{
     font-family:'MyFont';
     src:url('ralewayb.ttf')	  
-    }	
+    }	 */
 
 .popup {    
     display: none;    
@@ -16,7 +26,7 @@
 	border: none;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
-	font: normal 15px/1 "MyFont", Times, serif;
+	font: normal 15px/1 "Bangers", Times, serif;
 	color: rgba(255,255,255,1);
 	text-align: center;
 	-o-text-overflow: ellipsis;
@@ -36,6 +46,27 @@
 	text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
 	
 	
+	
+}
+
+.chrono{
+	-webkit-box-sizing: content-box;
+	-moz-box-sizing: content-box;
+	box-sizing: content-box;
+	/*width: 50%;*/
+	position:absolute;	
+	padding: 5px;
+	overflow: hidden;
+	border: none;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	font: normal 25px/1 "Bangers", Times, serif;
+	color: rgba(255,255,255,1);
+	text-align: center;
+	-o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+
 }
 
 body { margin: 0; }

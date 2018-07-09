@@ -5,9 +5,10 @@ function rand(m,M){
 function dialogue(texte,mode,textes_boutons,couleurs_boutons,events_boutons){
     freeze=true;
     let res=new createjs.Container();    
-    let text = new createjs.Text(texte, "16px MyFont", "#000000");    
+    let text = new createjs.Text(texte, "16px Bangers", "#000000");    
     text.textBaseline = "top";
     text.lineWidth=600;
+    text.lineHeight=24;
     let L=text.getBounds().width;
     let H=text.getBounds().height;
     let fond=new createjs.Shape();
@@ -18,7 +19,7 @@ function dialogue(texte,mode,textes_boutons,couleurs_boutons,events_boutons){
         let t=20;
         let n=Math.ceil((L*1.1-t)/t);
         let pas=(L*1.1-t)/n;
-        let n2=Math.ceil((H*1.1-t)/t);
+        let n2=Math.ceil((H*1.1-t)/t)+1;       
         let pas2=(H*1.1-t)/n2;
         let px=t/2;
         let py=0;
@@ -58,9 +59,9 @@ function dialogue(texte,mode,textes_boutons,couleurs_boutons,events_boutons){
         }
     text.text="";    
 
-    res.clear=function(){
-        freeze=false;
-        createjs.Tween.get(res).to({scaleX:0.8,scaleY:0.8,alpha:0},300).call(()=>{            
+    res.clear=function(){      
+        freeze=false;  
+        createjs.Tween.get(res).to({scaleX:0.8,scaleY:0.8,alpha:0},300).call(()=>{                       
             res.removeAllEventListeners();
             if(res.parent!=null){res.parent.removeChild(res);}
             let ch=document.getElementById('reponse');
@@ -94,7 +95,7 @@ function dialogue(texte,mode,textes_boutons,couleurs_boutons,events_boutons){
             for(let i=0;i<textes_boutons.length;i++){
                 let b=new createjs.Container();
                 let f=new createjs.Shape();
-                let t=new createjs.Text(textes_boutons[i], "10px MyFont", "#FFFFFF");  
+                let t=new createjs.Text(textes_boutons[i], "16px Bangers", "#FFFFFF");  
                 t.textBaseline = "top";          
                 let l=t.getBounds().width;
                 let h=t.getBounds().height;            
@@ -102,8 +103,8 @@ function dialogue(texte,mode,textes_boutons,couleurs_boutons,events_boutons){
                 t.x=l*0.25;
                 t.y=h*0.25;
                 b.addChild(f,t);
-                b.x=pos-l-25;
-                b.y=H+25;
+                b.x=pos-l;
+                b.y=H;
                 b.mouseChildren=false;
                 b.cursor="pointer";
                 b.addEventListener("click",()=>{res.dispatchEvent(events_boutons[i])})
