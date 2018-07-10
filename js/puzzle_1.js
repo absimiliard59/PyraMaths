@@ -34,7 +34,7 @@ var options = {
         nbr_carre2:"1;10;10;100;100",
         nbr_carre3:"1;10;100;1000",
         nbr_carre4:"1;10;10;100;100",
-        repartition:"ordonnee",		
+        repartition:"aleatoire",		
     };
    
 
@@ -161,6 +161,10 @@ creerPageQuestion = function() {
     c4.addEventListener("click",function(){if(exo.bloque==false && freeze==false ){carre_rotation(c4,tab_cache)}})
     
     creer_enonce();
+    while(exo.evaluer=="faux"){
+        creer_enonce();
+
+    }
     
     freeze=false;
     
