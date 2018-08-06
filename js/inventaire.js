@@ -81,10 +81,12 @@ function inventaire(){
             if(res.selected==null){
             res.selected=e.target;
             res.selected.scaleX=res.selected.scaleY=res.selected.scaleY*0.6;
+            if(mode!="laby"){
             res.utiliser.alpha=1
+            }
             if(mode=="laby"){res.deposer.alpha=1;}
             } else {
-                res.selected.scaleX=res.selected.scaleY=res.selected.scaleY/0.6;
+                res.selected.scaleX=res.selected.scaleY=res.selected.scaleY/0.6;                
                 if(res.selected!=e.target){
                     res.selected=e.target;
                     res.selected.scaleX=res.selected.scaleY=res.selected.scaleY*0.6;
@@ -98,9 +100,9 @@ function inventaire(){
     }
 
     res.reset=function(){    
-        selected=null;   
+        res.selected=null;   
         for (let i=0;i<res.mon_inventaire.length;i++){
-            console.log(res.mon_inventaire[i].scaleX)
+            console.log(res.mon_inventaire[i].info.bitmap.scaleX)
             res.mon_inventaire[i].info.bitmap.scaleX=res.mon_inventaire[i].info.bitmap.scaleY=res.mon_inventaire[i].info.scale;            
         }
         res.utiliser.alpha=res.deposer.alpha=res.prendre.alpha=0.3;

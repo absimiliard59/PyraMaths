@@ -19,12 +19,14 @@
         <script src="js/STLloader.js"></script>
         <script src="js/dialogue.js"></script>
         <script src="js/puzzle_1.js"></script>
+        <script src="js/puzzle_2.js"></script>
         <script src="js/utils.js"></script>
         <script src="js/inventaire.js"></script>
         <script src="js/Chargeur.js"></script>
 
         
 		<script>
+            var Main_Scale;
             var temps=3600
             var montre;
             var images,textures,Ch;
@@ -65,13 +67,13 @@
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,0,5,0,4,1,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,0,0,3,0,0,1,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,5,0,3,0,0,1,0,0,0,0],
                  [0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,0],
                  [0,0,0,0,0,0,0,1,0,1,2,1,0,1,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,1,0,1,1,1,0,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,0,1,5,1,0,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,1,4,1,0,1,1,1,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -109,7 +111,11 @@
               {src:"images/serpent.png", id:"serpent"},
               {src:"images/pierre.jpg", id:"pierre"},
               {src:"images/gemme_bleu.png", id:"gemme_bleu"},
+              {src:"images/gemme_rouge.png", id:"gemme_rouge"},
               {src:"images/stele.png", id:"stele"},
+              {src:"images/scarabe.png", id:"scarabe"},
+              {src: "images/empreinte_f.png", id:"empreinte_f"},
+              {src: "images/empreinte_p.png", id:"empreinte_p"}
 
              
                
@@ -144,7 +150,7 @@
             scene = new THREE.Scene();
             scene.fog = new THREE.Fog("#000000", 0.0025, 5);
             var L=window.innerWidth*2/3
-            var Main_Scale=L/755
+            Main_Scale=L/755
             
             camera = new THREE.PerspectiveCamera( 40, 755 / 400, 0.1, 1000 );
             renderer = new THREE.WebGLRenderer();
@@ -184,7 +190,7 @@
             scene.add(pyramide);
             render();
                 
-            big_enigme=[puzzle_1()]; //liste des enigmes sur canvas
+            big_enigme=[puzzle_1(),puzzle_2()]; //liste des enigmes sur canvas
         
             let cont=document.getElementById("enigme")
             eng = document.getElementById("eng");  
@@ -260,8 +266,9 @@
                 let enface_l=enface().l;
                 let enface_c=enface().c  ;                
                 let e=get_stele(enface_l,enface_c).enigme;    
-                let o=objets.selected;                
-            
+                let o=objets.selected;   
+                console.log(e.indice)
+                console.log(o.objet.info.indice)           
                 if(e.indice==o.objet.info.indice){                    
                     objets.deranger();
                     e.debloque();
@@ -309,13 +316,20 @@
             
             
             //////////////////////// Création des objets ///////////////////////////
-            // LE SERPENT           
+            let o1=[textures["serpent"],textures["scarabe"]]
+            let o2=[images["serpent"],images["scarabe"]]
+            let o3=[0,1]
+            let o4=[0.08,0.11]
+                       
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){
                     if(Laby[i][j]==5){
-                    var objMaterial = new THREE.SpriteMaterial( { map: textures["serpent"], color: 0xffffff } );                
+                    let alea=Math.floor(o1.length*Math.random());
+                    alea=0;
+                    let t=o1[alea];
+                    var objMaterial = new THREE.SpriteMaterial( { map: t, color: 0xffffff } );                
                     objMaterial.fog=true;
-                    let c=Serpent(1,3,1,objMaterial);
+                    let c=Objet(1,3,1,objMaterial);
                     c.position.x=-10+1*j;
                     c.position.z=-10+1*i+0.5;
                     c.position.y=0.35;
@@ -323,12 +337,17 @@
                     c.L=i;
                     c.C=j;      
                     pyramide.add(c); 
-                    c.info={indice:0,bitmap:new createjs.Bitmap(images["serpent"]),scale:0.08}; //indice: l'indice dans big_enigme de l'énigme correspondant à cet objet, bitmap pour l'image de l'inventaire, scale pour le dimensionner dans l'inventaire
+                    c.info={indice:o3[alea],bitmap:new createjs.Bitmap(o2[alea]),scale:o4[alea]}; //indice: l'indice dans big_enigme de l'énigme correspondant à cet objet, bitmap pour l'image de l'inventaire, scale pour le dimensionner dans l'inventaire
+                    o1.splice(alea,1);
+                    o2.splice(alea,1);
+                    o3.splice(alea,1);
+                    o4.splice(alea,1);
                     liste_objets.push(c);
                         }
                     }
                 } 
-            function Serpent(l,L,h,material){  
+            // LES OBJETS
+            function Objet(l,L,h,material){  
                 var sprite = new THREE.Sprite( material );    
                 
                 sprite.prise=function(l,d){   
@@ -372,8 +391,9 @@
             } 
             
             
+            
             //////////////////////// Création des gemmes ///////////////////////////
-            let gemmes=["gemme_bleu"]        
+            let gemmes=["gemme_bleu","gemme_rouge"]        
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){
                     if(Laby[i][j]==4){
@@ -480,6 +500,7 @@
                     c.enigme=big_enigme[0];
                     liste_stel.push(c);
                     pyramide.add( c ); 
+                    big_enigme.splice(0,1)
                     }
                     }
                 }   
@@ -740,12 +761,14 @@
                                             createjs.Tween.get(e).to({x:0},500)
                                             eng.style.zIndex=4000; 
                                             e.addEventListener("quitter",()=>{ 
-                                                objets.reset();               
+                                                objets.reset(); 
+                                                e.removeAllEventListeners()             
                                                 createjs.Tween.get(e).to({x:1000},500).call(()=>{Main_enigme.removeChild(e);eng.style.zIndex=1000;By_pass();mode="laby" })
                                             })
                                             e.addEventListener("valider",()=>{
                                                 if(e.evaluer()=="juste"){
-                                                objets.reset();               
+                                                objets.reset();  
+                                                e.removeAllEventListeners()             
                                                 createjs.Tween.get(e).to({x:1000},500).call(()=>{
                                                     Main_enigme.removeChild(e);
                                                     eng.style.zIndex=1000;By_pass();
@@ -774,7 +797,7 @@
                             })
         }         
             
-            var tw //la tween de déplacement
+        var tw //la tween de déplacement
 
         function By_pass(){
             let enface_l=enface().l;
