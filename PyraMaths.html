@@ -20,6 +20,7 @@
         <script src="js/dialogue.js"></script>
         <script src="js/puzzle_1.js"></script>
         <script src="js/puzzle_2.js"></script>
+        <script src="js/puzzle_3.js"></script>
         <script src="js/utils.js"></script>
         <script src="js/inventaire.js"></script>
         <script src="js/Chargeur.js"></script>
@@ -115,7 +116,10 @@
               {src:"images/stele.png", id:"stele"},
               {src:"images/scarabe.png", id:"scarabe"},
               {src: "images/empreinte_f.png", id:"empreinte_f"},
-              {src: "images/empreinte_p.png", id:"empreinte_p"}
+              {src: "images/empreinte_p.png", id:"empreinte_p"},
+              {src: "images/galet.png", id:"galet"},
+              {src: "images/papyrus.png", id:"papyrus"},
+              {src: "images/papyrus2.png", id:"papyrus2"},
 
              
                
@@ -190,7 +194,7 @@
             scene.add(pyramide);
             render();
                 
-            big_enigme=[puzzle_1(),puzzle_2()]; //liste des enigmes sur canvas
+            big_enigme=[puzzle_3(),puzzle_2()]; //liste des enigmes sur canvas
         
             let cont=document.getElementById("enigme")
             eng = document.getElementById("eng");  
@@ -316,10 +320,11 @@
             
             
             //////////////////////// Création des objets ///////////////////////////
-            let o1=[textures["serpent"],textures["scarabe"]]
-            let o2=[images["serpent"],images["scarabe"]]
+            let o1=[textures["papyrus2"],textures["scarabe"]]
+            let o2=[images["papyrus2"],images["scarabe"]]
             let o3=[0,1]
-            let o4=[0.08,0.11]
+            let o4=[0.1,0.11]
+            //let o4=[0.08,0.11] [serpent,scarabe,parpyrus2]
                        
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){

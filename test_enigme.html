@@ -6,7 +6,7 @@
 
 <script src="http://code.createjs.com/easeljs-0.6.0.min.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/puzzle_2.js"></script>
+<script src="js/puzzle_3.js"></script>
 <script src="js/createjs-2015.05.21.min.js"></script>
 
 
@@ -17,8 +17,8 @@ var images={}
 function init() {
 	var manifest = [             
               {src:"images/pierre.jpg", id:"pierre"}, 
-              {src: "images/empreinte_f.png", id:"empreinte_f"},
-              {src: "images/empreinte_p.png", id:"empreinte_p"},
+              {src: "images/galet.png", id:"galet"},
+              {src: "images/papyrus.png", id:"papyrus"},
                   
 	       ];
 
@@ -41,8 +41,8 @@ function start(){
 	stage.update();	
     createjs.Ticker.timingMode = createjs.Ticker.RAF;
     createjs.Ticker.addEventListener("tick", stage);
-    
-    let enigme=puzzle_2();
+    stage.enableMouseOver(); 
+    let enigme=puzzle_3();
     stage.addChild(enigme);
 }
 </script>
