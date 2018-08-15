@@ -6,55 +6,29 @@ var p; // shortcut to reference prototypes
 (lib.brouillon = function() {
 	this.initialize();
 
-	// Layer 1
-	this.instance = new lib.un();
-	this.instance.setTransform(72.5,130);
-
 	// Layer 2
-	this.instance_1 = new lib.bg();
-	this.instance_1.setTransform(170,230,1,1,0,0,0,150,150);
+	this.instance = new lib.down();
+	this.instance.setTransform(40,45);
 
-	this.addChild(this.instance_1,this.instance);
+	this.addChild(this.instance);
 }).prototype = p = new cjs.Container();
-p.nominalBounds = new cjs.Rectangle(20,0,380,380);
+p.nominalBounds = new cjs.Rectangle(20,20,40,50);
 
 
 // symbols:
-(lib.galet = function() {
-	this.initialize(img.galet);
-}).prototype = p = new cjs.Bitmap();
-p.nominalBounds = new cjs.Rectangle(0,0,400,400);
-
-
-(lib.papyrus = function() {
-	this.initialize(img.papyrus);
-}).prototype = p = new cjs.Bitmap();
-p.nominalBounds = new cjs.Rectangle(0,0,400,400);
-
-
-(lib.un = function() {
+(lib.down = function() {
 	this.initialize();
 
 	// Layer 1
 	this.shape = new cjs.Shape();
-	this.shape.graphics.f().s("#FFFFFF").ss(4,1,1).p("AAAhjIAADH");
+	this.shape.graphics.f().s("#7799B1").ss(1,1,1).p("ADIAyIhkAAIAAkrIjHAAIAAErIhkAAIDHDIg");
 
-	this.addChild(this.shape);
+	this.shape_1 = new cjs.Shape();
+	this.shape_1.graphics.f("#A0B7C8").s().p("AjGAyIBkAAIAAkrIDFAAIAAErIBkAAIjHDIg");
+
+	this.addChild(this.shape_1,this.shape);
 }).prototype = p = new cjs.Container();
-p.nominalBounds = new cjs.Rectangle(0,0,0,0);
-
-
-(lib.bg = function() {
-	this.initialize();
-
-	// Layer 1
-	this.shape = new cjs.Shape();
-	this.shape.graphics.f().s("#000000").ss(1,1,1).p("ARMhjIAAvoIvoAAIAAPoIPoAAIMgAAAuDhjIAAvoIvoAAIAAPoIPoAAIPnAAIAAPnIPoAAIAAvnA9rhjIAAPnIPoAAIAAvnAuDdsIPnAAIAAvoIvnAAIAAPoIvoAAIAAvoAdsOEIsgAAIAAPoIvoAAAuD9rIAAMgIPnAAIAAsg");
-	this.shape.setTransform(190,110);
-
-	this.addChild(this.shape);
-}).prototype = p = new cjs.Container();
-p.nominalBounds = new cjs.Rectangle(0,-79.9,380,380);
+p.nominalBounds = new cjs.Rectangle(-19.9,-24.9,40,50);
 
 })(lib = lib||{}, images = images||{}, createjs = createjs||{});
 var lib, images, createjs;

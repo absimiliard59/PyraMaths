@@ -2,7 +2,7 @@ puzzle_3 = function(){
 
 let exo=new createjs.Container()
 exo.bloque=true;
-exo.indice=0;
+exo.indice=2;
     
 var util = utilitaire();//raccourci
     

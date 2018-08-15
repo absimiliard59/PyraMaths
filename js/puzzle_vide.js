@@ -11,6 +11,7 @@ var util = utilitaire();//raccourci
 let scene; //un Container global qui contiendra le plateau de jeu
 let freeze; //variable indiquant si les boutons sont actifs ou non
 let valider,quitter //les boutons
+let u,b1,b2,b3,b4,b5
 
 
     
@@ -61,8 +62,15 @@ creerPageQuestion = function() {
     valider.visible=false;
     exo.addChild(valider,quitter)
 
+     // Pour tester hors du labyrinthe
+     exo.addEventListener("valider",exo.evaluer);
+     valider.visible=true;
+
     exo.valider=valider;
-    exo.quitter=quitter;    
+    exo.quitter=quitter; 
+    
+  
+    
   
 }
 

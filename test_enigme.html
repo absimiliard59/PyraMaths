@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>CreateJS export from SpriteSheet</title>
+<link href="https://fonts.googleapis.com/css?family=Bangers" rel="stylesheet"> 
 
 <script src="http://code.createjs.com/easeljs-0.6.0.min.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/puzzle_3.js"></script>
+<script src="js/puzzle_5.js"></script>
 <script src="js/createjs-2015.05.21.min.js"></script>
+<script src="js/tween.min.js"></script>
 
 
 <script>
@@ -18,7 +20,7 @@ function init() {
 	var manifest = [             
               {src:"images/pierre.jpg", id:"pierre"}, 
               {src: "images/galet.png", id:"galet"},
-              {src: "images/papyrus.png", id:"papyrus"},
+              {src: "images/sablier.png", id:"sablier"},
                   
 	       ];
 
@@ -36,15 +38,26 @@ function handleFileLoad(evt) {
     } 
 
 function start(){
+    Main_Scale=1.5
     canvas = document.getElementById("canvas");	
+    canvas.width=canvas.width*Main_Scale;
+    canvas.height=canvas.height*Main_Scale;
 	stage = new createjs.Stage(canvas);	
 	stage.update();	
     createjs.Ticker.timingMode = createjs.Ticker.RAF;
-    createjs.Ticker.addEventListener("tick", stage);
+    createjs.Ticker.addEventListener("tick", update);
     stage.enableMouseOver(); 
-    let enigme=puzzle_3();
+    let enigme=puzzle_5();
+    enigme.scaleX=enigme.scaleY=Main_Scale;
     stage.addChild(enigme);
 }
+
+function update(){
+    stage.update();
+    TWEEN.update();
+
+}
+
 </script>
 </head>
 

@@ -50,13 +50,15 @@ function inventaire(){
     res.ranger=function(o){
         res.prendre.alpha=0.3;
         let b=o.info.bitmap;
-        b.regX=b.getBounds().width/2;
-        b.regY=b.getBounds().height/2;
-        b.mouseChildren=false;
-        b.scaleX=b.scaleY=o.info.scale;
-        res.mon_inventaire.push(o);
-        refresh();        
-        b.y=20;
+        b.addEventListener("added",()=>{
+            b.regX=b.getBounds().width/2;
+            b.regY=b.getBounds().height/2;
+            b.mouseChildren=false;
+            b.scaleX=b.scaleY=o.info.scale;
+            res.mon_inventaire.push(o);
+            refresh();        
+            b.y=20;
+            })
         res.addChild(b);
         b.cursor="pointer";
         b.objet=o;        
