@@ -24,6 +24,7 @@ var liste_empreinte_facteurs; //liste des empreintes carrées
 var liste_empreinte_produits; //liste des empreintes rondes
 var scene_f,scene_p;//Containers contenant les facteurs et les produits
 var nbr_carre_max;// nombre maximum de carré
+var piece_cache;
 
 
     
@@ -59,7 +60,7 @@ creerDonnees = function() {
 };
 
 exo.debloque=function(){ 
-    createjs.Tween.get(liste_facteurs[0]).to({y:liste_facteurs[0].oy},500)   
+    createjs.Tween.get(piece_cache).to({y:piece_cache.oy},500)   
     exo.bloque=false;
     valider.visible=true;
 }
@@ -106,6 +107,8 @@ creerPageQuestion = function() {
      let produits_caches=Math.ceil(c[1]*pourcentage_produits)    
     const s= creer_scene(facteurs_caches,produits_caches)
      scene.addChild(s)
+
+    // exo.debloque()
         
   
 }
@@ -412,8 +415,12 @@ function creer_scene(f,p){
                                 });
             }
     }
-    
-    liste_facteurs[0].y=-200
+    let i=Math.floor(Math.random()*liste_facteurs.length)
+    while(liste_facteurs[i].place==true){
+        i=Math.floor(Math.random()*liste_facteurs.length)
+    }
+    liste_facteurs[i].y=-400
+    piece_cache=liste_facteurs[i];
     
    for(let i=0;i<produits.length;i++){
         for(let j=0;j<produits[i].length;j++){

@@ -2,7 +2,7 @@ puzzle_4 = function(){
 
 let exo=new createjs.Container()
 exo.bloque=true;
-exo.indice=0;
+exo.indice=3;
     
 var util = utilitaire();//raccourci
     
@@ -76,7 +76,11 @@ exo.debloque=function(){
         u.Fill(500,f6);
         for(let i=0;i<5;i++){             
             l_bouteille[i].Fill(500,bf[i]);  
-          }    
+          };
+        scene.addChildAt(u.oeil,0) ;
+        u.oeil.x=u.x+50
+        u.oeil.y=u.y+70
+
 
     })
 }
@@ -131,7 +135,7 @@ creerPageQuestion = function() {
     u.frac=[0,1]
     u.x=250;
     u.oy=220;
-    u.y=-200;
+    u.y=-300;
     scene.addChild(u);
     //u.Fill(500,f6)
     bf=[f1,f2,f3,f4,f5];    
@@ -156,8 +160,11 @@ creerPageQuestion = function() {
     sab.y=200
     sab.x=600
     scene.addChild(sab)
+    sab.scaleX=sab.scaleY=0.9
 
     transfert=[0,0];
+
+    exo.debloque();
     
   
 }
@@ -373,6 +380,10 @@ function Urne(fr){
                                 .start();
     }
 
+    res.oeil = new createjs.Shape();
+	res.oeil.graphics.f().s("#000000").ss(30,1,1).p("AWLqgQDUg5DbgTQjLhFjLhDQiYgxiagsQj7hHj+g7Qj0g3j4glQjfgijhgMQj/gMj7AaQinASikArQiKAliDA8QiaBIiEBvQhPBDhHBLQB3AGByAgQBwAgBnA5QCQBRB6B0QB9B3CKBkQBNA3BdAUQCDAaCHgFQCFgGCDgUQCMgWCKgfQCGgeB7g4QE0iQE9h3QDVhODag5gAWqLuQi+iAC+hIQBSAAA7A7QA7A6AABTQAABTg7A7Qg7A6hSAAQgEAAgEAAIgDAAQ6/gfmewZIAAVkAzhCWQFyhKCxjO");
+	res.oeil.setTransform(50,70);
+
 
       let shape = new createjs.Shape();
 	shape.graphics.f().s("#000000").ss(1,1,1).p("AEakaQB2B2AACkQAAClh2B1Qh1B2ilAAQikAAh2h2Qh1h1AAilQAAikB1h2QB2h1CkAAQClAAB1B1gAFhlgQCTCSAADOQAADPiTCSQiSCTjPAAQjOAAiSiTQiTiSAAjPQAAjOCTiSQCSiTDOAAQDPAACSCTg");
@@ -383,7 +394,7 @@ function Urne(fr){
 	shape_2 = new createjs.Shape();
 	shape_2.graphics.f("#66FFFF").s().p("AlgFgQiTiSAAjOQAAjNCTiTQCTiTDNAAQDOAACSCTQCUCTAADNQAADOiUCSQiSCUjOAAQjNAAiTiUgAkZkZQh1B1AACkQAAClB1B1QB1B2CkgBQClABB1h2QB2h1gBilQABikh2h1Qh1h1ilAAQikAAh1B1g");
 
-    res.addChild(shape_2,shape_1,shape);
+    res.addChild(res.oeil,shape_2,shape_1,shape);
     res.addChild(graduations);
     res.addChild(reservoir);   
     res.mouseChildren=false;
@@ -418,7 +429,7 @@ function Sablier(){
 
     res.cursor="pointer";
     res.addEventListener("click",()=>{
-        if(freeze){return false}
+        if(freeze || exo.bloque){return false}
         freeze=true;
         createjs.Tween.get(res).to({rotation:360},500).call(()=>{
             freeze=false;

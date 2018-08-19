@@ -14,9 +14,7 @@
 		<script src="js/three.js"></script>
         <script src="js/OrbitControls.js"></script>
         <script src="js/createjs-2015.05.21.min.js"></script>
-        <script src="js/tween.min.js"></script>
-        <script src="js/Controle.js"></script>
-        <script src="js/STLloader.js"></script>
+        <script src="js/tween.min.js"></script>               
         <script src="js/dialogue.js"></script>
         <script src="js/puzzle_1.js"></script>
         <script src="js/puzzle_2.js"></script>
@@ -26,6 +24,7 @@
         <script src="js/utils.js"></script>
         <script src="js/inventaire.js"></script>
         <script src="js/Chargeur.js"></script>
+        <script src="js/laby.js"></script>
 
         
 		<script>
@@ -36,6 +35,9 @@
             var scene,spotLight,pyramide;
             var stage_enigme,stage_controleur,stage_inventaire,renderer;          
             var camera //la camera de la scene 3D
+            var controls //orbital controle 
+            var light_controls //lumiere ajoutée
+            var save_position //la position et l'ange de la caméra avant passage à l'orbital
             var tremble=0 //permet de gérer le tremblement de la caméra
             var tremble2=0 //idem pour Main_enigme
             var current; //objet en cours de selection
@@ -61,7 +63,7 @@
         
             
             
-            var Laby=[
+            /* var Laby=[
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -82,10 +84,127 @@
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-                ]
+                ] */
+            var dim1=25
+            var dim2=25
+            var Laby           
+            //On complète le laby
+            let is_complete=false;
+            while (is_complete==false){
+                Laby=creer_laby(dim1,dim2);
+                Laby[1][1]=2;
+                let c1=complete_laby_stele(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
+                let c2=complete_laby_stele(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
+                let c3=complete_laby_stele(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
+                let c4=complete_laby_stele(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
+                let c5=complete_laby_stele(1,1,dim1-2,dim2-2);               
+                is_complete=true && c1 && c2 && c3 && c4  &&  c5;
+                c1=complete_laby_objet(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
+                c2=complete_laby_objet(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
+                c3=complete_laby_objet(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
+                c4=complete_laby_objet(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
+                c5=complete_laby_objet(1,1,dim1-2,dim2-2);               
+                is_complete=is_complete && c1 && c2 && c3 && c4  &&  c5;
+                c1=complete_laby_monstre(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
+                c2=complete_laby_monstre(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
+                c3=complete_laby_monstre(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
+                c4=complete_laby_monstre(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2)); 
+                is_complete=is_complete && c1 && c2 && c3 && c4  ;
+                c1=trou(1,1,dim1-2,dim2-2);    
+                c2=trou(1,1,dim1-2,dim2-2);    
+                c3=trou(1,1,dim1-2,dim2-2); 
+                is_complete=is_complete && c1 && c2 && c3  
+
+            }
+
+            debug_laby();
+
+
+        function trou(l,c,largeur,hauteur){
+            let res=false;
+            let count=0;
+            let ligne,colonne
+            while(res==false && count<100000){
+                //on place une stèle                
+                ligne=l+Math.floor((hauteur)*Math.random());
+                colonne=c+Math.floor((largeur)*Math.random());                            
+                if(Laby[ligne][colonne]==1){
+                    res=true;
+                }
+                count++;                      
+            }
+            if(count<100000){                
+                Laby[ligne][colonne]=0
+            }
+            return(res)
+
+        } 
             
+        function culdesac(l,c){
+            if(Laby[l+1][c]==0 && Laby[l-1][c]==1 && Laby[l][c+1]==1 && Laby[l][c-1]==1){return true}
+            if(Laby[l+1][c]==1 && Laby[l-1][c]==0 && Laby[l][c+1]==1 && Laby[l][c-1]==1){return true}
+            if(Laby[l+1][c]==1 && Laby[l-1][c]==1 && Laby[l][c+1]==0 && Laby[l][c-1]==1){return true}
+            if(Laby[l+1][c]==1 && Laby[l-1][c]==1 && Laby[l][c+1]==1 && Laby[l][c-1]==0){return true}
+            return(false)
+        }  
             
-          
+        function complete_laby_stele(l,c,largeur,hauteur){           
+            let res=false;
+            let count=0;
+            let ligne,colonne
+            while(res==false && count<100000){
+                //on place une stèle                
+                ligne=l+Math.floor((hauteur)*Math.random());
+                colonne=c+Math.floor((largeur)*Math.random());                                         
+                if(Laby[ligne][colonne]==0){
+                    res=culdesac(ligne,colonne)
+                }
+                count++;                      
+            }
+            if(count<100000){                
+                Laby[ligne][colonne]=4
+            }
+            return(res)
+        }
+
+        function complete_laby_objet(l,c,largeur,hauteur){           
+            let res=false;
+            let count=0;
+            let ligne,colonne
+            while(res==false && count<100000){
+                //on place une stèle                
+                ligne=l+Math.floor((hauteur)*Math.random());
+                colonne=c+Math.floor((largeur)*Math.random());                            
+                if(Laby[ligne][colonne]==0){
+                    res=true;
+                }
+                count++;                      
+            }
+            if(count<100000){                
+                Laby[ligne][colonne]=5
+            }
+            return(res)
+        }
+
+         function complete_laby_monstre(l,c,largeur,hauteur){           
+            let res=false;
+            let count=0;
+            let ligne,colonne
+            while(res==false && count<100000){
+                //on place une stèle                
+                ligne=l+Math.floor((hauteur)*Math.random());
+                colonne=c+Math.floor((largeur)*Math.random());                            
+                if(Laby[ligne][colonne]==0){
+                    res=true;
+                }
+                count++;                      
+            }
+            if(count<100000){                
+                Laby[ligne][colonne]=3
+            }
+            return(res)
+        }
+
             
         function init() {
 
@@ -175,14 +294,21 @@
             camera.position.x = 0;
         
             camera.lookAt(new THREE.Vector3( 0, 0.5, -1 ))
-                    
+            
+            ////////////////////////////// CONTROL ORBITAL ////////////////////////
+           /*  var controls = new THREE.OrbitControls( camera );  
+            var light = new THREE.AmbientLight( 0xFFFFFF ); 
+            scene.add( light );  
+            scene.fog=null        
+            controls.update(); */
+            //////////////////////////////////////////////////////////////////
             
             // placement du personnage
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){
                     if(Laby[i][j]==2){                    
-                    camera.position.x=-10+1*j;
-                    camera.position.z=-10+1*i+0.5;  
+                    camera.position.x=-dim1/2+1*j;
+                    camera.position.z=-dim2/2+1*i+0.5;  
                     pos_l=i;
                     pos_c=j;
                     Laby[i][j]=0;
@@ -312,11 +438,7 @@
             }
             ////////////////////////////////////////////////////////////////////////////////////////    
                 
-            /*var orbit = new THREE.OrbitControls( camera, renderer.domElement );
-            orbit.enableZoom = true;
-            var light = new THREE.AmbientLight( 0x000000 ); 
-            scene.add( light );
-            document.getElementById("eng").style.display="none"*/
+          
                 
             /////////////////////// Dialogues /////////////////////////            
             phara=new createjs.Bitmap(images["compagnon"]);
@@ -344,8 +466,8 @@
                     var objMaterial = new THREE.SpriteMaterial( { map: t, color: 0xffffff } );                
                     objMaterial.fog=true;
                     let c=Objet(1,3,1,objMaterial);
-                    c.position.x=-10+1*j;
-                    c.position.z=-10+1*i+0.5;
+                    c.position.x=-dim1/2+1*j;
+                    c.position.z=-dim2/2+1*i+0.5;
                     c.position.y=0.35;
                     c.scale.x=c.scale.y=c.scale.z=0.2;
                     c.L=i;
@@ -384,8 +506,8 @@
                 sprite.replace=function(l,d){ 
                     freeze=true;   
                     Laby[l][d]=5;
-                    sprite.position.x=-10+1*d;
-                    sprite.position.z=-10+1*l+0.5;
+                    sprite.position.x=-dim1/2+1*d;
+                    sprite.position.z=-dim2/2+1*l+0.5;
                     let a=sprite.position.x;
                     let c=sprite.position.z;
                     sprite.L=l;
@@ -415,8 +537,8 @@
                     var gMaterial = new THREE.SpriteMaterial( { map: t, color: 0xffffff } );                
                     gMaterial.fog=true;
                     let c=Gemme(1,3,1,gMaterial);
-                    c.position.x=-10+1*j;
-                    c.position.z=-10+1*i+0.5;
+                    c.position.x=-dim1/2+1*j;
+                    c.position.z=-dim2/2+1*i+0.5;
                     c.position.y=-0.35;
                     c.scale.x=c.scale.y=c.scale.z=0.2;
                     c.L=i;
@@ -478,8 +600,8 @@
                 sprite.replace=function(l,d){ 
                     freeze=true;   
                     Laby[l][d]=5;
-                    sprite.position.x=-10+1*d;
-                    sprite.position.z=-10+1*l+0.5;
+                    sprite.position.x=-dim1/2+1*d;
+                    sprite.position.z=-dim2/2+1*l+0.5;
                     let a=sprite.position.x;
                     let c=sprite.position.z;
                     sprite.L=l;
@@ -505,8 +627,8 @@
                 for(let j=0;j<Laby.length;j++){
                     if(Laby[i][j]==4){
                     let c=Stele(1,3,1,steleMaterial);
-                    c.position.x=-10+1*j;
-                    c.position.z=-10+1*i+0.5;
+                    c.position.x=-dim1/2+1*j;
+                    c.position.z=-dim2/2+1*i+0.5;
                     c.position.y=0.35;
                     c.scale.x=c.scale.y=c.scale.z=0.7;
                     c.L=i;
@@ -543,24 +665,32 @@
             }            
         
         
-            ///////////////////////// Création des momies //////////////////////////////////////////////
-            
-            var momieMaterial = new THREE.SpriteMaterial( { map: textures["momie"], color: 0xffffff } );
-            momieMaterial.fog=true;
+            ///////////////////////// Création des monstres //////////////////////////////////////////////
+            small_enigme=[];
+            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
+            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
+            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
+            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
+        
+            let monstre=["momie","momie","momie","momie"]           
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){
-                    if(Laby[i][j]==3){
-                    let c=Momie(1,3,1,momieMaterial);
-                    c.position.x=-10+1*j;
-                    c.position.z=-10+1*i+0.5;
-                    c.position.y=0.35;
-                    c.scale.x=c.scale.y=c.scale.z=0.7
-                    c.L=i;
-                    c.C=j;
-                    c.enigme=small_enigme[0];
-                    liste_mom.push(c)
-                    pyramide.add( c ); 
-                    }
+                        if(Laby[i][j]==3){
+                        var momieMaterial = new THREE.SpriteMaterial( { map: textures[monstre[0]], color: 0xffffff } );
+                        momieMaterial.fog=true;
+                        let c=Momie(1,3,1,momieMaterial);
+                        c.position.x=-dim1/2+1*j;
+                        c.position.z=-dim2/2+1*i+0.5;
+                        c.position.y=0.35;
+                        c.scale.x=c.scale.y=c.scale.z=0.7
+                        c.L=i;
+                        c.C=j;
+                        c.enigme=small_enigme[0];
+                        liste_mom.push(c)
+                        pyramide.add( c ); 
+                        small_enigme.splice(0,1);
+                        monstre.splice(0,1);
+                        }
                     }
                 }
 
@@ -592,9 +722,11 @@
             let solTexture=textures["sand"];
             solTexture.wrapS = THREE.RepeatWrapping;
             solTexture.wrapT = THREE.RepeatWrapping;
-            solTexture.repeat.set( 20, 20 );
+            //solTexture.repeat.set( 20, 20 );
+            solTexture.repeat.set( dim1, dim2 );
             var solMaterial = new THREE.MeshPhongMaterial( { map: solTexture, color: 0xffffff } );
-            let ground=Sol(20,0.01,20,solMaterial);
+            //let ground=Sol(20,0.01,20,solMaterial);
+            let ground=Sol(dim1,0.01,dim2,solMaterial);
             pyramide.add( ground );    
             function Sol(l,L,h,material_sol){ 
                 var geometry = new THREE.BoxGeometry( l,L,h );                
@@ -626,13 +758,17 @@
                         c=Cube(1,3,1,murMaterial1);   
                         }
                     }
-                    c.position.x=-10+1*j;
-                    c.position.z=-10+1*i+0.5;
+                    //c.position.x=-10+1*j;
+                    //c.position.z=-10+1*i+0.5;
+                    c.position.x=-dim1/2+1*j;
+                    c.position.z=-dim2/2+1*i+0.5;
                     c.position.y=0.5;
                     pyramide.add( c ); 
                     let  b=Bord(0.5,0.2,0.05,0.05,bordMaterial)                    
-                    b.position.x=-10+1*j;
-                    b.position.z=-10+1*i;
+                    //b.position.x=-10+1*j;
+                    //b.position.z=-10+1*i;
+                    b.position.x=-dim1/2+1*j;
+                    b.position.z=-dim2/2+1*i;
                     b.position.y=0;
                     pyramide.add( b );
                     }
@@ -676,7 +812,9 @@
                 
     
                 
-            document.onkeydown=keyPressed;
+            document.onkeydown=keyPressed;            
+            document.onkeyup=multiple_key;
+            
         }
                             
 //            var bgtexture= THREE.ImageUtils.loadTexture( "images/background.jpg");            
@@ -852,10 +990,77 @@
                 }
 
         }
+        var keymap=[];
+        function multiple_key(event){                  
+            if(mode=="3d"){               
+                controls.enabled=false;                           
+                camera.position.set( save_position.x, save_position.y, save_position.z );
+                camera.rotation.y=save_position.rotation;
+                camera.rotation.x=0;
+                camera.rotation.z=0;
+                scene.remove(light_controls)
+                scene.fog=new THREE.Fog("#000000", 0.0025, 5);  
+                let r=save_position.rotation;               
+                mode="laby";
+                for(let i=0;i<liste_stel.length;i++){                   
+                    liste_stel[i].scale.x=liste_stel[i].scale.y=liste_stel[i].scale.z=liste_stel[i].save_scale
+                }
+                for(let i=0;i<liste_objets.length;i++){                   
+                    liste_objets[i].scale.x=liste_objets[i].scale.y=liste_objets[i].scale.z=liste_objets[i].save_scale
+                }
+                for(let i=0;i<liste_mom.length;i++){                    
+                    liste_mom[i].scale.x=liste_mom[i].scale.y=liste_mom[i].scale.z=liste_mom[i].save_scale
+                }
+            }
+            if(mode=="enigme"){return false}
+            let c=event.keyCode; 
+            //console.log(c)           
+            if(c==37 || c==39 || c==38 || c==40){
+                keymap=[]
+            } else {
+                keymap.push(c);
+            }
+            if(keymap[0]==77 && keymap[1]==79 && keymap[2]==77 && keymap[3]==73 && keymap[4]==69 && mode=="laby"){
+                mode="3d";
+                save_position={"x":camera.position.x,
+                                "y":camera.position.y,
+                                "z":camera.position.z,
+                                "rotation":Number(camera.rotation.y),
+                                //"look_at":camera.getWorldDirection()
+                                }                             
+                controls = new THREE.OrbitControls( camera );  
+                controls.enableKeys=false
+                light_controls= new THREE.AmbientLight( 0xFFFFFF ); 
+                scene.add( light_controls );  
+                scene.fog=null                 
+                camera.position.set( 0, 50, 0 );
+                camera.lookAt(new THREE.Vector3( 0, 0, 0 ))
+                controls.update();
+                keymap=[];
+                for(let i=0;i<liste_stel.length;i++){
+                    liste_stel[i].save_scale=liste_stel[i].scale.x;
+                    liste_stel[i].scale.x=liste_stel[i].scale.y=liste_stel[i].scale.z=liste_stel[i].scale.x*1.5
+                }
+                for(let i=0;i<liste_objets.length;i++){
+                    liste_objets[i].save_scale=liste_objets[i].scale.x;
+                    liste_objets[i].scale.x=liste_objets[i].scale.y=liste_objets[i].scale.z=liste_objets[i].scale.x*3
+                }
+                for(let i=0;i<liste_mom.length;i++){
+                    liste_mom[i].save_scale=liste_mom[i].scale.x;
+                    liste_mom[i].scale.x=liste_mom[i].scale.y=liste_mom[i].scale.z=liste_mom[i].scale.x*3
+                }
+
+            }
+           
+            
+        }
+
 
         function keyPressed(event) {  
-            //console.log(event.keyCode)           
-            if(mode=="enigme"){return false}
+            //console.log(event.keyCode) 
+            //console.log(camera.rotation.y) 
+           // console.log(camera.getWorldDirection())                       
+            if(mode=="enigme" || mode=="3d"){return false}           
             if(freeze==false){
                 objets.prendre.alpha= objets.utiliser.alpha=0.3;
                 freeze=true;                   
@@ -867,6 +1072,7 @@
                     }
 
                     case 37:{
+                        console.log("e")
                         let f=camera.rotation.y+3.1415/2;
                         rotation+=90
                         if(rotation>180){rotation=-90}
@@ -1067,8 +1273,8 @@
             renderer.render( scene, camera );
             TWEEN.update();
             if(tremble>0){                   
-                camera.position.x=-10+1*pos_c+tremble*Math.cos(6.28*Math.random());
-                camera.position.z=-10+1*pos_l+0.5+tremble*Math.cos(6.28*Math.random());                
+                camera.position.x=-dim1/2+1*pos_c+tremble*Math.cos(6.28*Math.random());
+                camera.position.z=-dim2/2+1*pos_l+0.5+tremble*Math.cos(6.28*Math.random());                
                 tremble=tremble-0.01
                 }     
             if(tremble2>0){      
