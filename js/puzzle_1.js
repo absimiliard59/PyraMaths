@@ -190,7 +190,26 @@ creerPageQuestion = function() {
     objectif.textAlign="center";
     objectif.x=550;
     objectif.y=210;
-    exo.addChild(objectif);
+    //exo.addChild(objectif);
+
+    
+
+    let obj=eval_plateau(tab_nombre,tab_solution)
+    console.log(obj)
+    let obj_clip=new createjs.Container();
+    obj_clip.x=440
+    obj_clip.y=150
+    let m=convert_millier(obj,"v")
+    let c=convert_centaine(obj,"v")
+    let d=convert_dizaine(obj,"v")
+    let u=convert_unite(obj,"v")
+    m.x=0
+    c.x=50
+    d.x=100
+    u.x=150    
+    obj_clip.addChild(m,c,d,u)
+    obj_clip.scaleX=obj_clip.scaleY=1.5
+    exo.addChild(obj_clip)
 
     valider=bouton("Valider",exo,"valider")
     valider.x=630
@@ -204,7 +223,9 @@ creerPageQuestion = function() {
     exo.addChild(valider,quitter)
 
     exo.valider=valider;
-    exo.quitter=quitter;    
+    exo.quitter=quitter; 
+    
+   // exo.debloque();
   
 }
 
@@ -259,6 +280,166 @@ corriger = function() {
 
     
 ////////////////////////////////////// Bibliothèque annexe ///////////////////////////////////
+function millier() {
+	let res=new createjs.Container();
+	let shape = new createjs.Shape();
+	shape.graphics.f().s("#FF0000").ss(3,1,1).p("AgdBkIAdAeIAAizQgTAAgPgOQgPgPAAgVQAAgUAPgPQAPgPATAAQAUAAAPAPQADACACADIgoAeIAlAhQgBACgBABQgPAOgUAAAAACCQgTAAgPAGQgPAFAAAJIBjAAQAAgJgPgFQgPgGgUAAIAege");
+    res.addChild(shape);
+    shape.y=15
+    return(res)
+}
+
+function centaine(){
+    let res=new createjs.Container();
+    let shape = new createjs.Shape();
+	shape.graphics.f().s("#FF0000").ss(5,1,1).p("AhSg2QgHghAPgdQASghAjgJQAhgKAfAUQAfATAKAmQAAABABACQAMA/iFg1AgDCiQgXhyg2hh");
+	shape.setTransform(5.3,9.6,0.52,0.56,0,0,0,0.1,0);
+    res.addChild(shape);
+    return(res)
+}
+
+function dizaine(){
+    let res=new createjs.Container();
+    let shape = new createjs.Shape();
+	shape.graphics.f().s("#FF0000").ss(3,1,1).p("AgxBcIAAiGQAAgCABgBQABgSANgOQAPgOATAAQAUAAAPAOQAPAPAAAVIAACD");
+    shape.setTransform(5,9.3);
+    res.scaleX=res.scaleY=0.9;
+    res.addChild(shape);
+    return(res)
+}
+
+function unite(){
+    let res=new createjs.Container();
+    let shape = new createjs.Shape();   
+	shape.graphics.f().s("#FF0000").ss(3,1,1).p("AAAhZIAACz");
+    shape.setTransform(0,9);
+    res.scaleX=res.scaleY=0.9;
+    res.addChild(shape);
+    return(res)
+}
+
+
+function convert_centaine(n,option){
+    let res=new createjs.Container();
+    let cent=Math.floor((n-Math.floor(n/1000)*1000)/100);
+    let c;  
+    if(option=="h"){      
+        for (let i=0;i<cent;i++){
+            c=centaine();
+            c.x=i%2*11
+            c.y=22*Math.floor(i/2)
+            res.addChild(c)
+        }
+        if(cent<2){
+            res.regX=cent*11;
+        } else {
+            res.regX=11*2;
+        }
+    } else {
+        for (let i=0;i<cent;i++){
+            c=centaine();
+            if(cent==5){
+            c.scaleY=c.scaleX=0.8           
+            }
+            c.x=3
+            c.y=21*i
+            res.addChild(c)
+        }       
+
+    }
+    return(res)
+}
+
+function convert_millier(n,option){
+    let res=new createjs.Container();
+    let cent=Math.floor(n/1000);
+    let c;  
+    if(option=="h"){      
+        for (let i=0;i<cent;i++){
+            c=millier();
+            c.x=i%2*11
+            c.y=22*Math.floor(i/2)
+            res.addChild(c)
+        }
+        if(cent<2){
+            res.regX=cent*11;
+        } else {
+            res.regX=11*2;
+        }
+    } else {
+        for (let i=0;i<cent;i++){
+            c=millier();
+            if(cent==5){
+            c.scaleY=c.scaleX=0.8           
+            }
+            c.x=3
+            c.y=35*i
+            res.addChild(c)
+        }       
+
+    }
+    return(res)
+}
+
+function convert_dizaine(n,option){
+    let res=new createjs.Container();
+    let diz=Math.floor((n-Math.floor(n/100)*100)/10);
+    let d;  
+    if(option=="h"){      
+        for (let i=0;i<diz;i++){
+            d=dizaine();
+            d.x=i%3*12
+            d.y=24*Math.floor(i/3)
+            res.addChild(d)
+        }
+        if(diz<3){
+            res.regX=-(diz-1)*10+6;
+            if(diz==1){res.regX=-4}
+        } else {
+            res.regX=-3;
+        }
+    } else {
+        for (let i=0;i<diz;i++){
+            d=dizaine();
+            if(diz>=5){
+            d.scaleY=d.scaleX=0.75           
+            }
+            d.x=3+11*Math.floor(i/5)
+            d.y=21*Math.floor(i%5)
+            res.addChild(d)
+        }       
+
+    }
+    return(res)
+}
+
+function convert_unite(n,option){
+    let res=new createjs.Container();
+    let uni=n-Math.floor(n/10)*10;
+    let d;  
+    if(option=="h"){      
+        for (let i=0;i<uni;i++){
+            d=unite();
+            d.x=i%3*10
+            d.y=24*Math.floor(i/3)
+            res.addChild(d)
+        }
+        
+    } else {
+        for (let i=0;i<uni;i++){
+            d=unite();
+            if(uni>=5){
+            d.scaleY=d.scaleX=0.75           
+            }
+            d.x=3+11*Math.floor(i/5)
+            d.y=21*Math.floor(i%5)
+            res.addChild(d)
+        }       
+
+    }
+    return(res)
+}
+
 function bouton(te,clip,event){
     let b=new createjs.Container();
     let f=new createjs.Shape();

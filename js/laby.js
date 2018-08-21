@@ -10,8 +10,9 @@ function creer_laby(L,H){
                 maze[i][j] = 1;
             }
         }
-        var posX = 1;
+        var posX = 2;
         var posY = 1;
+        maze[1][1]=0; 
         maze[posX][posY] = 0; 
         moves.push(posY + posY * mazeWidth);
         generer();

@@ -25,6 +25,8 @@
         <script src="js/inventaire.js"></script>
         <script src="js/Chargeur.js"></script>
         <script src="js/laby.js"></script>
+        <script src="js/textes.js"></script>
+        <script src="js/page_titre.js"></script>
 
         
 		<script>
@@ -33,7 +35,9 @@
             var montre;
             var images,textures,Ch;
             var scene,spotLight,pyramide;
-            var stage_enigme,stage_controleur,stage_inventaire,renderer;          
+            var stage_enigme,stage_controleur,stage_inventaire,stage_texture,renderer;   
+            var emplacement,sortie;
+            var canvas_texture;       
             var camera //la camera de la scene 3D
             var controls //orbital controle 
             var light_controls //lumiere ajoutée
@@ -57,34 +61,12 @@
             var liste_objets=[]; //listes des objets;                     
             var mode="laby" //ou "enigme" si le joueur est en train de résoudre une énigme.
             var premier_objet=true;
+            var premier_enigme=true;
+            
 
 
-            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
+            small_enigme.push([q1,"1678"])
         
-            
-            
-            /* var Laby=[
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,4,1,0,1,1,1,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,5,0,0,0,0,1,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,2,1,0,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,1,1,0,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-                ] */
             var dim1=25
             var dim2=25
             var Laby           
@@ -92,30 +74,33 @@
             let is_complete=false;
             while (is_complete==false){
                 Laby=creer_laby(dim1,dim2);
-                Laby[1][1]=2;
+                Laby[2][1]=2;
                 let c1=complete_laby_stele(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
                 let c2=complete_laby_stele(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
                 let c3=complete_laby_stele(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
                 let c4=complete_laby_stele(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
                 let c5=complete_laby_stele(1,1,dim1-2,dim2-2);               
                 is_complete=true && c1 && c2 && c3 && c4  &&  c5;
-                c1=complete_laby_objet(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
-                c2=complete_laby_objet(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
+                c1=complete_laby_objet(3,3,Math.floor((dim1-2)/2)-2,Math.floor((dim2-2)/2)-2);               
+                c2=complete_laby_objet(3,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2)-2,Math.floor((dim2-2)/2));              
                 c3=complete_laby_objet(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
                 c4=complete_laby_objet(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
-                c5=complete_laby_objet(1,1,dim1-2,dim2-2);               
+                c5=complete_laby_objet(3,3,dim1-4,dim2-4);               
                 is_complete=is_complete && c1 && c2 && c3 && c4  &&  c5;
                 c1=complete_laby_monstre(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
                 c2=complete_laby_monstre(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
                 c3=complete_laby_monstre(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
                 c4=complete_laby_monstre(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2)); 
                 is_complete=is_complete && c1 && c2 && c3 && c4  ;
-                c1=trou(1,1,dim1-2,dim2-2);    
-                c2=trou(1,1,dim1-2,dim2-2);    
-                c3=trou(1,1,dim1-2,dim2-2); 
+                c1=trou(3,3,dim1-4,dim2-4);    
+                c2=trou(3,3,dim1-4,dim2-4);    
+                c3=trou(3,3,dim1-4,dim2-4); 
                 is_complete=is_complete && c1 && c2 && c3  
 
             }
+            if(Laby[1][2]==0){Laby[1][0]=6;} else {Laby[0][1]=6}
+
+           
 
             debug_laby();
 
@@ -243,10 +228,13 @@
               {src: "images/empreinte_p.png", id:"empreinte_p"},
               {src: "images/galet.png", id:"galet"},
               {src: "images/papyrus.png", id:"papyrus"},
-              {src: "images/papyrus2.jpg", id:"papyrus2"},
+              {src: "images/papyrus2.png", id:"papyrus2"},
               {src: "images/sablier.png", id:"sablier"},
               {src: "images/urne.png", id:"urne"},
               {src: "images/piece3d.png", id:"piece3d"},
+              {src: "images/background.jpg", id:"background"},
+              {src: "images/indy.png", id:"indy"},
+              {src: "images/pyramide.png", id:"pyramide"},
 
              
                
@@ -287,6 +275,7 @@
             renderer = new THREE.WebGLRenderer();
             
             renderer.setSize( L, 400*Main_Scale );
+            renderer.domElement.style.display="none"
             document.body.appendChild( renderer.domElement );     
                 
             camera.position.z = 0.5;
@@ -385,6 +374,18 @@
             Main_inventaire=new createjs.Container();
             stage_inventaire.addChild(Main_inventaire);
             Main_inventaire.scaleX=Main_inventaire.scaleY=Main_Scale;
+            
+            ////////////////////////////////////////////////////////////// PAGE TITRE ///////////////////////////////////////
+            let etape_begin=page_titre();
+            Main_enigme.addChild(etape_begin)
+            eng.style.zIndex=4000;
+            freeze=true;
+            etape_begin.addEventListener("enroute",()=>{
+                renderer.domElement.style.display=""
+                createjs.Tween.get(etape_begin).to({x:1000},500).call(()=>{Main_enigme.removeChild(etape_begin);eng.style.zIndex=1000;mode="laby"; });
+                createjs.Tween.get(phara).wait(1200).to({x:750},500).call(()=>{freeze=true;intro()});
+            })
+
 
             ////////////////////////// création et gestion de l'inventaire ////////////////////////////
             objets=inventaire();
@@ -401,19 +402,55 @@
                 }
             }
 
-            function utilise(){               
-                let enface_l=enface().l;
-                let enface_c=enface().c  ;                
-                let e=get_stele(enface_l,enface_c).enigme;    
-                let o=objets.selected;   
-                console.log(e.indice)
-                console.log(o.objet.info.indice)           
-                if(e.indice==o.objet.info.indice){                    
-                    objets.deranger();
-                    e.debloque();
-                } else {
-                    console.log("mauvais objet")
+            function utilise(){
+                let o=objets.selected; 
+                if(mode=="porte"){ 
+                    console.log(objets.selected)
+                    if(o.objet.info.indice==1000000){
+                       objets.deranger();
+                       console.log(o.couleur)
+                       switch(o.objet.couleur){
+                           case "gemme_rouge":
+                           emplacement.rouge.visible=true;
+                           break;
+                           case "gemme_bleu":
+                           emplacement.bleu.visible=true;
+                           break;
+                           case "gemme_verte":
+                           emplacement.vert.visible=true;
+                           break;
+                           case "gemme_jaune":
+                           emplacement.jaune.visible=true;
+                           break;
+                           case "gemme_blanche":
+                           emplacement.blanche.visible=true;
+                           break;
+                       }
+                       if(emplacement.rouge.visible==true && emplacement.bleu.visible==true && emplacement.vert.visible==true && emplacement.jaune.visible==true && emplacement.blanche.visible==true){
+                        sortie.open();
+                       }
+                      
+                       stage_texture.update();
+                       sortie.material.map.needsUpdate=true;
+
+
+                    }
+                } else {             
+                    let enface_l=enface().l;
+                    let enface_c=enface().c  ;                
+                    let e=get_stele(enface_l,enface_c).enigme;                                         
+                    console.log(e.indice)
+                    console.log(o.objet.info.indice)           
+                    if(e.indice==o.objet.info.indice){                    
+                        objets.deranger();
+                        e.debloque();
+                    } else {
+                        console.log("mauvais objet");
+                        tremble2=10;
+                        temps=temps-60;
+                    }
                 }
+                
             }
 
             function prise(e){  
@@ -441,21 +478,22 @@
           
                 
             /////////////////////// Dialogues /////////////////////////            
-            phara=new createjs.Bitmap(images["compagnon"]);
-            phara.scaleX=phara.scaleY=0.5
+            phara=new createjs.Bitmap(images["indy"]);
+            phara.scaleX=-0.3
+            phara.scaleY=0.3
             //phara.x=650 x final
             phara.x=1000;
-            phara.y=300 // y final          
+            phara.y=250 // y final          
             Main_control.addChild(phara);
-            createjs.Tween.get(phara).wait(200).to({x:650},500).call(intro);
+           
             
             
             //////////////////////// Création des objets ///////////////////////////
             let o1=[textures["serpent"],textures["scarabe"],textures["papyrus2"],textures["urne"],textures["piece3d"]]
             let o2=[images["serpent"],images["scarabe"],images["papyrus2"],images["urne"],images["piece3d"]]
             let o3=[0,1,2,3,4]
-            let o4=[0.08,0.11,0.1,0.08,0.09]
-            //let o4=[0.08,0.11,0.1,0.08] [serpent,scarabe,parpyrus2,urne]
+            let o4=[0.08,0.11,0.09,0.06,0.09]
+            //let o4=[0.08,0.11,0.09,0.08] [serpent,scarabe,parpyrus2,urne]
                        
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){
@@ -544,10 +582,14 @@
                     c.L=i;
                     c.C=j;      
                     pyramide.add(c); 
+                    c.couleur=gemmes[0];
                     c.info={indice:1000000,bitmap:new createjs.Bitmap(images[gemmes[0]]),scale:0.08}; //indice: l'indice dans big_enigme de l'énigme correspondant à cet objet, bitmap pour l'image de l'inventaire, scale pour le dimensionner dans l'inventaire
                     liste_objets.push(c);
                     gemmes.splice(0,1);
-                    //Laby[i][j]=5
+                    ///////////////pour tester la sortie////////////////////
+                    //c.prise(i,j);
+                    //objets.ranger(c)
+
                         }
                     }
                 } 
@@ -667,11 +709,11 @@
         
             ///////////////////////// Création des monstres //////////////////////////////////////////////
             small_enigme=[];
-            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
-            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
-            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
-            small_enigme.push(["AAAHHH! Tu ne passeras que si tu sais résoudre cette énigme !\rJe suis un nombre à 4 chiffres, dont le nombre de centaines vaut le double du chiffre pair des unités.\nMon chiffre des dizaines est compris entre celui des centaines et des unités, et c'est le seul.\nQui suis-je ?","1678"])
-        
+            small_enigme.push([q1,"1678"]);
+            small_enigme.push([q2,"12"]);
+            small_enigme.push([q1,"1678"]);
+            small_enigme.push([q1,"1678"]);
+          
             let monstre=["momie","momie","momie","momie"]           
             for(let i=0;i<Laby.length;i++){
                 for(let j=0;j<Laby.length;j++){
@@ -733,6 +775,61 @@
                 this.cube = new THREE.Mesh( geometry, material_sol );                  
                 return(this.cube);                        
             }      
+
+            ///////////////////////// Création de la porte de sortie //////////////////////////////////////
+            canvas_texture=document.getElementById("texture_maker");
+            stage_texture=new createjs.Stage(canvas_texture);
+            porte=new createjs.Bitmap(images["mur"]);
+            stage_texture.addChild(porte);
+            slot = function() {
+                let res=new createjs.Container();                
+                res.vert = new createjs.Bitmap(images["gemme_verte"]);
+                res.vert.setTransform(72.6,82,0.17,0.17,38.1);
+                res.rouge =  new createjs.Bitmap(images["gemme_rouge"]);
+                res.rouge.setTransform(409.6,83.1,0.17,0.17,38.1);
+                res.jaune =  new createjs.Bitmap(images["gemme_jaune"]);
+                res.jaune.setTransform(72.6,262.5,0.17,0.17,38.1);
+                res.bleu=  new createjs.Bitmap(images["gemme_bleu"]);
+                res.bleu.setTransform(412.6,261.5,0.17,0.17,38.1);
+                res.blanche =  new createjs.Bitmap(images["gemme_blanche"]);
+                res.blanche.setTransform(247.6,169,0.17,0.17,38.1); 
+                res.vert.visible=res.bleu.visible=res.jaune.visible=res.blanche.visible=res.rouge.visible=false;              
+                let shape = new createjs.Shape();               
+                shape.graphics.f().s("#993300").ss(0.1,1,1).p("AVmn5IJckbIAAjIIhViCIjNiCIkiAoIgrKWAV/T0IJckbIAAjIIhViCIjNiCIkiAoIgrKWAjnFXIJakbIAAjGIhViCIjNiCIkgAoIgrKUA/DoRIJckbIAAjIIhViCIjNiCIkiAoIgrKXA/HT5IJckbIAAjIIhViCIjNiCIkiAoIgrKW");
+                shape.setTransform(258,230.3);
+
+                let shape_1 = new createjs.Shape();
+                shape_1.graphics.f("#993300").s().p("A/aTQIArqWIEigoIDNCCIBVCCIAADIIpcEbgAVsTLIArqWIEigoIDNCCIBVCCIAADIIpcEbgAj6EuIArqUIEggoIDNCCIBVCCIAADGIpaEbgAVToiIArqWIEigoIDNCCIBVCCIAADIIpcEbgA/Wo5IArqXIEigoIDNCCIBVCCIAADIIpcEbg");
+                shape_1.setTransform(258,230.3);
+
+                let shape_2 = new createjs.Shape();
+                shape_2.graphics.f().s("#CC9933").ss(30.4,1,1).p("AYyOCQqRF1uhAAQugAAqSl1QqRl0AAoOQAAoNKRl0QKSl1OgAAQOhAAKRF1QKSF0AAINQAAIOqSF0g");
+                shape_2.setTransform(255,233.5);
+                res.addChild(shape_2,shape_1,  shape, res.blanche,res.bleu,res.jaune,res.vert,res.rouge);
+                return(res)
+            }
+            emplacement=slot();
+            emplacement.scaleX=emplacement.scaleY=0.25;            
+            emplacement.y=450;
+            emplacement.x=194;
+            stage_texture.addChild(emplacement);
+            stage_texture.update();
+
+            var porteMaterial = new THREE.MeshPhongMaterial( { map: new THREE.CanvasTexture(canvas_texture), color:0xFFFFFF,specular: 0x000000, shininess: 10 } ); //new THREE.CanvasTexture(canvas_texture); 
+                       
+            for(let i=0;i<Laby.length;i++){
+                for(let j=0;j<Laby.length;j++){
+                    if(Laby[i][j]==6){
+                        sortie=Cube(1,3,1,porteMaterial);
+                        sortie.position.x=-dim1/2+1*j;
+                        sortie.position.z=-dim2/2+1*i+0.5;
+                        sortie.position.y=-1.5;
+                        pyramide.add( sortie);                        
+                            }
+                    }
+            }
+
+
             
             ///////////////////////// Création des murs et bordures /////////////////////////////////////////////////////////////////////////////
             var murMaterial1 = new THREE.MeshPhongMaterial( { map: textures["mur"], color:0xFFFFFF,specular: 0x000000, shininess: 10 } ); 
@@ -776,18 +873,40 @@
                 }
             function Cube(l,L,h,material_mur){  
                 var geometry = new THREE.BoxGeometry( l,L,h );               
-                this.cube = new THREE.Mesh( geometry, material_mur );          
-                this.cube.Shake=function(c){
-                    var origine=c.position.clone();
-                    function moove(){
-                    c.position.x=origine.x+Math.random()*0.1
-                    c.position.y=origine.y+Math.random()*0.1
-                    c.position.z=origine.z+Math.random()*0.1
+                let cube = new THREE.Mesh( geometry, material_mur );          
+                cube.open=function(){                   
+                        //freeze=true;                   
+                        Laby[0][1]=0;
+                        let a=cube.position.x;
+                        let c=cube.position.z;
+                        let twe=new TWEEN.Tween( { y:cube.position.y } )
+                                            .to( { y:-1.5}, 3500 )
+                                            .onUpdate( function () {                               
+                                            cube.position.y = this.y;
+                                            cube.position.x=a+0.05*Math.cos(Math.random()*6.28);
+                                            cube.position.z=c+0.05*Math.cos(Math.random()*6.28)                                       
+                                            } )
+                                            .onComplete( ()=>{freeze=false; Laby[0][1]=0;}
+                                                )
+                                        .start();
                     }
-                    var r=window.setInterval(moove,50);
-                    setTimeout(function(){window.clearInterval(r);c.position.x=origine.x;c.position.y=origine.y;c.position.z=origine.z},2000);
-                    }            
-                return(this.cube);          
+                cube.close=function(){                   
+                        //freeze=true;                   
+                        Laby[0][1]=0;
+                        let a=cube.position.x;
+                        let c=cube.position.z;
+                        let twe=new TWEEN.Tween( { y:cube.position.y } )
+                                            .to( { y:0.5}, 3500 )
+                                            .onUpdate( function () {                               
+                                            cube.position.y = this.y;
+                                            cube.position.x=a+0.05*Math.cos(Math.random()*6.28);
+                                            cube.position.z=c+0.05*Math.cos(Math.random()*6.28)                                       
+                                            } )
+                                            .onComplete( ()=>{freeze=false; Laby[0][1]=6;}
+                                                )
+                                        .start();
+                    }                         
+                return(cube);          
                 }
             function Bord(l,L,h,e,material){        
             var shape = new THREE.Shape();
@@ -860,14 +979,26 @@
             }               
             return(obstacle);
         }
+
+         function detect_porte(dir){
+            let obstacle=false                
+            switch(dir){
+                case 0: if(Laby[pos_l-1][pos_c]==6){obstacle=true};break;
+                case -90: if(Laby[pos_l][pos_c+1]==6){obstacle=true};break;
+                case 90: if(Laby[pos_l][pos_c-1]==6){obstacle=true};break;
+                case 180: if(Laby[pos_l+1][pos_c]==6){obstacle=true};break;
+            }               
+            return(obstacle);
+        }
         
 
         function intro(){
-            let b=dialogue("Bonjour, je m'appelle Khaal Culatris et je serai ton guide dans cette aventure.\nPour te déplacer dans ce labyrinthe, il te faut utiliser les flèches du clavier. \nUn inventaire pour l'instant vide se situe ci-dessous.\nTu en auras certainement besoin pour résoudre les énigmes qui te seront proposées.\nJe te conseille de plus de te munir d'une feuille de papier et d'un crayon.","qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+            let b=dialogue(introduction,"qcm",["J'ai compris."],["#fc00ed"],["suite"]);
             b.x=640;
             b.y=330;            
-            b.addEventListener("suite",()=>{b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);montre=setInterval('chrono()',1000) })
+            b.addEventListener("suite",()=>{freeze=false;b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);montre=setInterval('chrono()',1000) })
             Main_control.addChild(b)
+            sortie.close();
         }
 
         function chrono(){
@@ -885,18 +1016,18 @@
         function first_objet(){            
             premier_objet=false;
             mode="enigme"
-            freeze=true;
-            let t="Bravo ! Tu viens de découvrir ton premier objet. \nTu peux le ranger dans ton inventaire.\nPar la suite, en le sélectionnant, tu pourras le déposer ou l'utiliser dans une énigme."
-            let b=dialogue(t,"qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+            freeze=true;            
+            let b=dialogue(premiere_fois,"qcm",["J'ai compris."],["#fc00ed"],["suite"]);
             b.x=640;
             b.y=330;            
             b.addEventListener("suite",()=>{b.clear();objets.prendre.alpha=1;createjs.Tween.get(phara).wait(300).to({x:1000},500);})
             Main_control.addChild(b)
         }
 
-        function trouve_stele(){
-            let t="Une stèle étrange comporte un mécanisme. \nVeux-tu essayer de résoudre l'énigme qu'elle propose ?"
-            let b=dialogue(t,"qcm",["OUI","NON"],["#fc00ed","#fc00ed"],["oui","non"]);
+        function trouve_stele(){ 
+            let m;
+            if(premier_enigme==true){m=meca2;premier_enigme=false}else{m=meca}           
+            let b=dialogue(m,"qcm",["OUI","NON"],["#fc00ed","#fc00ed"],["oui","non"]);
             b.x=640;
             b.y=330;   
             Main_control.addChild(b)         
@@ -936,9 +1067,8 @@
                                             if(e.bloque==true){  
                                                 objets.bloque=true;
                                                 eng.style.zIndex=1000; 
-                                                createjs.Tween.get(phara,{override:true}).to({x:650},500).call(()=>{
-                                                    let t2="Le mécanisme ne semble pas fonctionner.\nPeut-être qu'un objet de ton inventaire serait utile ?"
-                                                    let b2=dialogue(t2,"qcm",["OK"],["#fc00ed"],["ok"]);
+                                                createjs.Tween.get(phara,{override:true}).to({x:750},500).call(()=>{                                                    
+                                                    let b2=dialogue(need_objet,"qcm",["OK"],["#fc00ed"],["ok"]);
                                                     b2.x=640;
                                                     b2.y=330;   
                                                     Main_control.addChild(b2)    
@@ -1059,7 +1189,8 @@
         function keyPressed(event) {  
             //console.log(event.keyCode) 
             //console.log(camera.rotation.y) 
-           // console.log(camera.getWorldDirection())                       
+           // console.log(camera.getWorldDirection())  
+                            
             if(mode=="enigme" || mode=="3d"){return false}           
             if(freeze==false){
                 objets.prendre.alpha= objets.utiliser.alpha=0.3;
@@ -1071,8 +1202,7 @@
                         break;
                     }
 
-                    case 37:{
-                        console.log("e")
+                    case 37:{                        
                         let f=camera.rotation.y+3.1415/2;
                         rotation+=90
                         if(rotation>180){rotation=-90}
@@ -1103,7 +1233,7 @@
                     break;}
                         
                     case 38:{  
-                        if(collision(rotation)=="obj" && premier_objet==true){
+                        if(collision(rotation)=="obj" && premier_objet==true){                            
                             return false;
                         }                          
                         if((collision(rotation)=="rien" || collision(rotation)=="obj") ){      
@@ -1144,7 +1274,7 @@
                             let enface_l=enface().l;
                             let enface_c=enface().c;                            
                             if(Laby[enface_l][enface_c]==4){
-                                createjs.Tween.get(phara).to({x:650},500).call(trouve_stele);
+                                createjs.Tween.get(phara).to({x:750},500).call(trouve_stele);
                                                                     
                             }
                             if(Laby[enface_l][enface_c]==3){
@@ -1162,7 +1292,12 @@
                                 objets.prendre.alpha=1;
                             }
 
-                            if(Laby[enface_l][enface_c]==1){
+                            if(Laby[enface_l][enface_c]==6){
+                               console.log("porte")
+                                                                    
+                            }
+
+                            if(Laby[enface_l][enface_c]==1 || Laby[enface_l][enface_c]==6){
                             freeze=false
                             }
                         }
@@ -1221,9 +1356,16 @@
                     freeze=true;
                     premier_objet=false;
                     objets.prendre.alpha=0.3;
-                    createjs.Tween.get(phara).to({x:650},500);
+                    createjs.Tween.get(phara).to({x:750},500);
                     first_objet();                                                                    
                     }
+            } else {
+
+                if(detect_porte(rotation)){
+                mode="porte"                
+                } else {
+                    mode="laby"
+                }
             }
         }
             
@@ -1300,7 +1442,7 @@
             
 		</script>
         
-   
+    <canvas id="texture_maker" width="512" height="1024" style="display:none; background-color:#D4D4D4"></canvas>
     <canvas id="controleur" width="200" height="400" style="position: absolute; z-index: 2000;"></canvas>
     <canvas id="inv" width="735" height="60" style="position: absolute; z-index: 3000;"></canvas>
     <div id="enigme" style="position: absolute;">

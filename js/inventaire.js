@@ -83,10 +83,10 @@ function inventaire(){
             if(res.selected==null){
             res.selected=e.target;
             res.selected.scaleX=res.selected.scaleY=res.selected.scaleY*0.6;
-            if(mode!="laby"){
+            if(mode!="laby" || mode=="porte"){
             res.utiliser.alpha=1
             }
-            if(mode=="laby"){res.deposer.alpha=1;}
+            if(mode=="laby" && mode !="porte"){res.deposer.alpha=1;}
             } else {
                 res.selected.scaleX=res.selected.scaleY=res.selected.scaleY/0.6;                
                 if(res.selected!=e.target){

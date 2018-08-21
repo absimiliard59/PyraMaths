@@ -7,9 +7,11 @@
 
 <script src="http://code.createjs.com/easeljs-0.6.0.min.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/puzzle_4.js"></script>
+<script src="js/page_fin.js"></script>
 <script src="js/createjs-2015.05.21.min.js"></script>
 <script src="js/tween.min.js"></script>
+<script src="js/textes.js"></script>
+<script src="js/dialogue.js"></script>
 
 
 <script>
@@ -42,6 +44,10 @@ function init() {
               {src: "images/sablier.png", id:"sablier"},
               {src: "images/urne.png", id:"urne"},
               {src: "images/piece3d.png", id:"piece3d"},
+              {src: "images/background.jpg", id:"background"},
+              {src: "images/indy.png", id:"indy"},
+              {src: "images/pyramide.png", id:"pyramide"},
+
 
                   
 	       ];
@@ -69,7 +75,7 @@ function start(){
     createjs.Ticker.timingMode = createjs.Ticker.RAF;
     createjs.Ticker.addEventListener("tick", update);
     stage_enigme.enableMouseOver(); 
-    let enigme=puzzle_4();
+    let enigme=page_fin();
     enigme.scaleX=enigme.scaleY=Main_Scale;
     stage_enigme.addChild(enigme);
 }
@@ -84,6 +90,6 @@ function update(){
 </head>
 
 <body onload="init();" style="background-color:#D4D4D4">
-	<canvas id="canvas" width="735" height="400" style="background-color:#ffffff"></canvas>
+	<canvas id="canvas" width="800" height="400" style="background-color:#ffffff"></canvas>
 </body>
 </html>
