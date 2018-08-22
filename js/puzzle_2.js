@@ -1,4 +1,4 @@
-puzzle_2 = function(){
+puzzle_2 = function(save){
 
 let exo=new createjs.Container()
 exo.bloque=true;
@@ -25,6 +25,10 @@ var liste_empreinte_produits; //liste des empreintes rondes
 var scene_f,scene_p;//Containers contenant les facteurs et les produits
 var nbr_carre_max;// nombre maximum de carré
 var piece_cache;
+exo.date_save={
+    para1:null,
+
+}
 
 
     
@@ -221,6 +225,10 @@ function set_facteurs(){
     r=util.shuffleArray(r);
     for(let i=0;i<Math.floor(10*Math.random());i++){
     rotation(r[0]);}
+    if(exo.date_save.para1==null){
+        exo.date_save.para1=r[0];
+        console.log(r[0])        
+    }
     return(r[0])
     
     

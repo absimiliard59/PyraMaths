@@ -7,7 +7,7 @@
 
 <script src="http://code.createjs.com/easeljs-0.6.0.min.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/page_fin.js"></script>
+<script src="js/puzzle_2.js"></script>
 <script src="js/createjs-2015.05.21.min.js"></script>
 <script src="js/tween.min.js"></script>
 <script src="js/textes.js"></script>
@@ -75,9 +75,10 @@ function start(){
     createjs.Ticker.timingMode = createjs.Ticker.RAF;
     createjs.Ticker.addEventListener("tick", update);
     stage_enigme.enableMouseOver(); 
-    let enigme=page_fin();
+    let enigme=puzzle_2();
     enigme.scaleX=enigme.scaleY=Main_Scale;
     stage_enigme.addChild(enigme);
+    enigme.debloque()
 }
 
 function update(){

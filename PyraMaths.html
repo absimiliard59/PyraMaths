@@ -27,11 +27,13 @@
         <script src="js/laby.js"></script>
         <script src="js/textes.js"></script>
         <script src="js/page_titre.js"></script>
+        <script src="js/page_fin.js"></script>
+        <script src="js/page_victoire.js"></script>
 
         
 		<script>
             var Main_Scale;
-            var temps=3600
+            var temps=7200
             var montre;
             var images,textures,Ch;
             var scene,spotLight,pyramide;
@@ -62,10 +64,23 @@
             var mode="laby" //ou "enigme" si le joueur est en train de résoudre une énigme.
             var premier_objet=true;
             var premier_enigme=true;
+            var all_objet=false;
+            var first_perte=true;
+
+            var sauvegarde={
+                "laby":null, //le tableau du labyrinthe
+                "inventaire":null, //le tableau contenant l'inventaire
+                "utilise":null, //le tableau contenant les objets utilisés
+                "e1":null, //la config de l'énigme 1
+                "e2":null,
+                "e3":null,
+                "e4":null,
+                "e5":null,
+                "position":null //position du joueur/camera
+
+            }
             
-
-
-            small_enigme.push([q1,"1678"])
+           
         
             var dim1=25
             var dim2=25
@@ -87,8 +102,8 @@
                 c4=complete_laby_objet(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
                 c5=complete_laby_objet(3,3,dim1-4,dim2-4);               
                 is_complete=is_complete && c1 && c2 && c3 && c4  &&  c5;
-                c1=complete_laby_monstre(1,1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));               
-                c2=complete_laby_monstre(1,Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
+                c1=complete_laby_monstre(3,3,Math.floor((dim1-2)/2)-2,Math.floor((dim2-2)/2)-2);               
+                c2=complete_laby_monstre(3,Math.floor((dim2-2)/2)-2,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));              
                 c3=complete_laby_monstre(Math.floor((dim1-2)/2),1,Math.floor((dim1-2)/2),Math.floor((dim2-2)/2));                             
                 c4=complete_laby_monstre(Math.floor((dim1-2)/2),Math.floor((dim2-2)/2),Math.floor((dim1-2)/2),Math.floor((dim2-2)/2)); 
                 is_complete=is_complete && c1 && c2 && c3 && c4  ;
@@ -98,11 +113,11 @@
                 is_complete=is_complete && c1 && c2 && c3  
 
             }
-            if(Laby[1][2]==0){Laby[1][0]=6;} else {Laby[0][1]=6}
+            Laby[0][1]=6;
 
            
 
-            debug_laby();
+            //debug_laby();
 
 
         function trou(l,c,largeur,hauteur){
@@ -132,6 +147,14 @@
             if(Laby[l+1][c]==1 && Laby[l-1][c]==1 && Laby[l][c+1]==1 && Laby[l][c-1]==0){return true}
             return(false)
         }  
+
+        function free_next(l,c){
+            if(Laby[l+1][c]==0){return [l+1,c]}
+            if(Laby[l][c+1]==0){return [l,c+1]}
+            if(Laby[l-1][c]==0){return [l-1,c]}
+            if(Laby[l][c-1]==0){return [l,c-1]}           
+            
+        }
             
         function complete_laby_stele(l,c,largeur,hauteur){           
             let res=false;
@@ -931,18 +954,11 @@
                 
     
                 
-            document.onkeydown=keyPressed;            
-            document.onkeyup=multiple_key;
+            
             
         }
                             
-//            var bgtexture= THREE.ImageUtils.loadTexture( "images/background.jpg");            
-//            var geometry = new THREE.PlaneGeometry( 90, 90, 32 );
-//            var material = new THREE.MeshBasicMaterial( {map:bgtexture, side: THREE.DoubleSide} );
-//            var plane = new THREE.Mesh( geometry, material );
-//            plane.position.z=-30;
-//            camera.add( plane );
-//            scene.add(camera);            
+         
             
 
         function get_stele(L,C){                         
@@ -970,7 +986,8 @@
         }
 
         function detect_objet(dir){
-            let obstacle=false                
+            let obstacle=false  ;
+            if(pos_l-1<0){return false}            
             switch(dir){
                 case 0: if(Laby[pos_l-1][pos_c]==5){obstacle=true};break;
                 case -90: if(Laby[pos_l][pos_c+1]==5){obstacle=true};break;
@@ -981,7 +998,8 @@
         }
 
          function detect_porte(dir){
-            let obstacle=false                
+            let obstacle=false    ;
+            if(pos_l-1<0){return false}            
             switch(dir){
                 case 0: if(Laby[pos_l-1][pos_c]==6){obstacle=true};break;
                 case -90: if(Laby[pos_l][pos_c+1]==6){obstacle=true};break;
@@ -996,21 +1014,33 @@
             let b=dialogue(introduction,"qcm",["J'ai compris."],["#fc00ed"],["suite"]);
             b.x=640;
             b.y=330;            
-            b.addEventListener("suite",()=>{freeze=false;b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);montre=setInterval('chrono()',1000) })
+            b.addEventListener("suite",()=>{
+                document.onkeydown=keyPressed;            
+                 document.onkeyup=multiple_key;
+                 freeze=false;b.clear();createjs.Tween.get(phara).wait(300).to({x:1000},500);montre=setInterval('chrono()',1000) })
             Main_control.addChild(b)
             sortie.close();
         }
 
         function chrono(){
-            if(temps<0){
+            if(temps==0){
                 temps=0;
                 clearInterval(montre);
-                alert("perdu !");
-            }
+                document.getElementById("chr").innerHTML="Temps: "+0+"min "+0+"s";               
+                console.log("perdu !");
+                let fin_bad=page_fin();
+                Main_enigme.addChild(fin_bad);
+                eng.style.zIndex=4000;
+                freeze=true;
+                setTimeout(fin_bad.cfini,2000)
+
+
+            } else {
             temps-=1;
             let min=Math.floor(temps/60);
             let sec=temps%60;
             document.getElementById("chr").innerHTML="Temps: "+min+"min "+sec+"s";
+            }
         }
 
         function first_objet(){            
@@ -1121,7 +1151,49 @@
 
         }
         var keymap=[];
-        function multiple_key(event){                  
+        function multiple_key(event){  
+            let c=event.keyCode; 
+            console.log(c)   
+            if(c==79 && mode=="3d" && all_objet==false){
+                for(let i=0;i<liste_objets.length/2;i++){
+                    liste_objets[i].prise(liste_objets[i].L,liste_objets[i].C);
+                    objets.ranger(liste_objets[i]);
+                    Laby[liste_objets[i].L][liste_objets[i].C]=0;
+                    
+                };
+                all_objet=true;
+                return false;
+            }
+
+             if((c==97 || c==98 || c==99 || c==100 || c==101) && mode=="3d"){
+                let s=liste_stel[c-97];
+                let ou=free_next(s.L,s.C);
+                console.log(ou)
+                pos_l=ou[0];
+                pos_c=ou[1];
+                controls.enabled=false;                           
+                camera.position.set( -dim1/2+1*ou[1], save_position.y, -dim2/2+1*ou[0]+0.5 );                  
+                spotLight.position.set( camera.position.x,  camera.position.y,  camera.position.z );             
+                camera.rotation.y=save_position.rotation;
+                camera.rotation.x=0;
+                camera.rotation.z=0;
+                scene.remove(light_controls)
+                scene.fog=new THREE.Fog("#000000", 0.0025, 5);                               
+                mode="laby";
+                for(let i=0;i<liste_stel.length;i++){                   
+                    liste_stel[i].scale.x=liste_stel[i].scale.y=liste_stel[i].scale.z=liste_stel[i].save_scale
+                }
+                for(let i=0;i<liste_objets.length;i++){                   
+                    liste_objets[i].scale.x=liste_objets[i].scale.y=liste_objets[i].scale.z=liste_objets[i].save_scale
+                }
+                for(let i=0;i<liste_mom.length;i++){                    
+                    liste_mom[i].scale.x=liste_mom[i].scale.y=liste_mom[i].scale.z=liste_mom[i].save_scale
+                }
+
+                
+
+            }
+                          
             if(mode=="3d"){               
                 controls.enabled=false;                           
                 camera.position.set( save_position.x, save_position.y, save_position.z );
@@ -1129,8 +1201,7 @@
                 camera.rotation.x=0;
                 camera.rotation.z=0;
                 scene.remove(light_controls)
-                scene.fog=new THREE.Fog("#000000", 0.0025, 5);  
-                let r=save_position.rotation;               
+                scene.fog=new THREE.Fog("#000000", 0.0025, 5);                                
                 mode="laby";
                 for(let i=0;i<liste_stel.length;i++){                   
                     liste_stel[i].scale.x=liste_stel[i].scale.y=liste_stel[i].scale.z=liste_stel[i].save_scale
@@ -1143,8 +1214,7 @@
                 }
             }
             if(mode=="enigme"){return false}
-            let c=event.keyCode; 
-            //console.log(c)           
+                      
             if(c==37 || c==39 || c==38 || c==40){
                 keymap=[]
             } else {
@@ -1266,7 +1336,20 @@
                                     camera.position.x = this.x;
                                     spotLight.position.x=this.x;
                                     } )
-                                    .onComplete( ()=>{freeze=false}
+                                    .onComplete( ()=>{
+                                        freeze=false;
+                                        if(pos_l==0 && pos_c==1){
+                                        console.log("sortie")  ;
+                                        freeze=true;
+                                        mode="enigme";
+                                        let fin_good=page_victoire();
+                                        Main_enigme.addChild(fin_good);
+                                        eng.style.zIndex=4000;
+                                        freeze=true;
+                                        setTimeout(fin_good.cfini,2000)  
+                                        clearInterval(montre);                                                                            
+                                        }
+                                    }
                                         )
                                 .start();
                         } else {
@@ -1295,7 +1378,8 @@
                             if(Laby[enface_l][enface_c]==6){
                                console.log("porte")
                                                                     
-                            }
+                            }                            
+                           
 
                             if(Laby[enface_l][enface_c]==1 || Laby[enface_l][enface_c]==6){
                             freeze=false
@@ -1418,14 +1502,37 @@
                 camera.position.x=-dim1/2+1*pos_c+tremble*Math.cos(6.28*Math.random());
                 camera.position.z=-dim2/2+1*pos_l+0.5+tremble*Math.cos(6.28*Math.random());                
                 tremble=tremble-0.01
+                if(first_perte){
+                   // erreur();
+                   // first_perte=false
+                }
                 }     
             if(tremble2>0){      
                 Main_enigme.x=tremble2*Math.cos(6.28*Math.random());
                 Main_enigme.y=tremble2*Math.cos(6.28*Math.random());
                 tremble2=tremble2-0.1
+                if(first_perte){
+                    erreur();
+                    first_perte=false
+                }
                 }     
             
-        }        
+        }   
+        
+        function erreur(){
+            createjs.Tween.get(phara).to({x:750},500).call(()=>{
+                eng.style.zIndex=1000;
+                let b=dialogue(perte,"qcm",["J'ai compris."],["#fc00ed"],["suite"]);
+                b.x=640;
+                b.y=330;            
+                b.addEventListener("suite",()=>{                
+                    b.clear();
+                    eng.style.zIndex=4000;
+                    createjs.Tween.get(phara).wait(300).to({x:1000},500);})
+                Main_control.addChild(b)
+                
+            });
+        }
         
         /////////////////////////////// fonction de debu Laby
         function debug_laby(){ 
@@ -1452,7 +1559,7 @@
         <input id="envoyer" class="bouton" type="button" value="OK">
     </form> 
     </div>
-    <p class="chrono" id="chr">Temps: 60min</p>        
+    <p class="chrono" id="chr">Temps: </p>        
     <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="position: absolute; right:0"><img alt="Licence Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br /></a>.
     
     </body>

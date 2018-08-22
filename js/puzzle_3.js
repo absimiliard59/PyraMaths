@@ -77,7 +77,7 @@ creerPageQuestion = function() {
     valider.y=340
 
     // Pour tester hors du labyrinthe
-   // exo.addEventListener("valider",exo.evaluer)
+    exo.addEventListener("valider",exo.evaluer)
 
     quitter=bouton("Quitter",exo,"quitter")
     quitter.x=510
@@ -144,16 +144,18 @@ creerPageQuestion = function() {
 }
 
 // Evaluation : doit toujours retourner "juste" "faux" ou "rien"
-exo.evaluer = function() {	
+exo.evaluer = function() {
+    console.log(solution)	
     res="juste";
     for(let i=0;i<3;i++){
         if(produit(i,"colonne")!=solution[i]){
-            res="faux"
+            res="faux";console.log(i+"pb_colonne"+produit(i,"colonne"))
         }
         if(produit(i,"ligne")!=solution[i+3]){
-            res="faux"
+            res="faux";console.log(i+"pb_ligne"+produit(i,"ligne"))
         }        
     }
+    console.log(res)
    
     return(res)
    

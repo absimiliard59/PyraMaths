@@ -54,12 +54,12 @@ creerDonnees = function() {
 
  }
 
-console.log(f1+"-"+f2);
-console.log("+");
-console.log(f3)
-console.log("+");
-console.log(f4+"-"+f5);
-console.log("="+f6);
+//console.log(f1+"-"+f2);
+//console.log("+");
+//console.log(f3)
+//console.log("+");
+//console.log(f4+"-"+f5);
+//console.log("="+f6);
 f2=Reste(f2)
 f5=Reste(f5)
 f6=Reste(f6);

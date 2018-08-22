@@ -1,4 +1,4 @@
-puzzle_1 = function(){
+puzzle_1 = function(save){
 
 let exo=new createjs.Container()
 exo.bloque=true;
@@ -20,6 +20,17 @@ let consigne;
 let objectif; // deux champs de texte
 let n1,n2,n3,n4; //les liste de nombres remplissant les carrés
 let valider,quitter //les boutons
+exo.data_save={"tab_valeurs":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],
+                "cible":0
+}
+//test
+/* save={  "tab_valeurs":[[1,10,0,0,0,10],[100,0,0,0,0,1000],[1,0,0,0,0,1],[0,0,10,10,0,0],[0,0,100,100,0,0],[0,0,100,1,0,0]],
+        "cible":[1,2,2,0,1]
+        } */
+if(save!=null){
+    exo.data_save.tab_valeurs=save.tab_valeurs;
+    exo.data_save.cible=save.cible;
+}
 
 
     
@@ -41,7 +52,7 @@ var options = {
 // Création des données de l'exercice (peut rester vide),
 // exécutée a chaque fois que l'on commence ou recommence l'exercice
 creerDonnees = function() {
- n1=String(options.nbr_carre1).split(";")
+n1=String(options.nbr_carre1).split(";")
 n2=String(options.nbr_carre2).split(";");
 n3=String(options.nbr_carre3).split(";");
 n4=String(options.nbr_carre4).split(";");
@@ -92,10 +103,21 @@ creerPageQuestion = function() {
         cr1="croix1";
         cr2="croix2";
     }
-    remplir_tab([1,1],n1,cr1);
-    remplir_tab([1,4],n2,cr1) ;
-    remplir_tab([4,1],n3,cr2) ;
-    remplir_tab([4,4],n4,cr2) ;
+
+    if(exo.data_save.cible==0){
+        remplir_tab([1,1],n1,cr1);
+        remplir_tab([1,4],n2,cr1) ;
+        remplir_tab([4,1],n3,cr2) ;
+        remplir_tab([4,4],n4,cr2) ;    
+        for(let i=0;i<6;i++){
+            for(let j=0;j<6;j++){
+                exo.data_save.tab_valeurs[i][j]=tab_nombre[i][j]
+            }
+        }
+    } else{
+        tab_nombre=exo.data_save.tab_valeurs;
+    }
+
     
     c1=carre_fond();
     c2=carre_fond();
@@ -166,6 +188,9 @@ creerPageQuestion = function() {
 
     }
     
+
+    console.log(exo.data_save)
+    
     freeze=false;
     
     let t;
@@ -195,7 +220,7 @@ creerPageQuestion = function() {
     
 
     let obj=eval_plateau(tab_nombre,tab_solution)
-    console.log(obj)
+    //console.log(obj)
     let obj_clip=new createjs.Container();
     obj_clip.x=440
     obj_clip.y=150
@@ -841,15 +866,29 @@ function eval_plateau(tn,tc){
 }
     
 function creer_enonce(){
+    let tour_p1;
+    let tour_p2;
+    let tour_p3;
+    let tour_p4;
+    let tour_pivot;
     if(String(n1[0])=='NaN'){c1.visible=false}
      if(String(n2[0])=='NaN'){c2.visible=false}
      if(String(n3[0])=='NaN'){c3.visible=false}
      if(String(n4[0])=='NaN'){c4.visible=false}
-    let tour_p1=Math.round(Math.random()*3)
-    let tour_p2=Math.round(Math.random()*3)
-    let tour_p3=Math.round(Math.random()*3)
-    let tour_p4=Math.round(Math.random()*3)
-    let tour_pivot=Math.round(Math.random()*3)
+     if(exo.data_save.cible==0){
+        tour_p1=Math.round(Math.random()*3)
+        tour_p2=Math.round(Math.random()*3)
+        tour_p3=Math.round(Math.random()*3)
+        tour_p4=Math.round(Math.random()*3)
+        tour_pivot=Math.round(Math.random()*3)
+        exo.data_save.cible=[tour_p1,tour_p2,tour_p3,tour_p4,tour_pivot]
+     } else {
+         tour_p1=exo.data_save.cible[0]
+        tour_p2=exo.data_save.cible[1]
+         tour_p3=exo.data_save.cible[2]
+         tour_p4=exo.data_save.cible[3]
+         tour_pivot=exo.data_save.cible[4]
+     }
     for(let i=0;i<tour_p1;i++){
         carre_rotation(c1,tab_solution,false)
     }
